@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stdbool.h"
+#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -94,12 +96,41 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  uint8_t msg;
+  uint8_t received;
+  bool head = false;
+  char buffer[6];
+
+  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  if (head){
+		  msg = (uint8_t
+				  )6;
+		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+		  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+		  HAL_Delay(250);
+		  msg = received;
+		  sprintf(buffer,"%u\r\n",msg);
+		  HAL_UART_Transmit(&huart2, buffer, 4, HAL_MAX_DELAY);
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+		  continue;
+	  }
+
+	  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+	  HAL_Delay(250);
+	  msg = received;
+	  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
