@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stdbool.h"
+#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -97,7 +98,8 @@ int main(void)
 
   uint8_t msg;
   uint8_t received;
-  bool head = false;
+  bool head = true;
+  char buffer[6];
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
@@ -110,11 +112,15 @@ int main(void)
   {
 	  if (head){
 		  msg = (uint8_t
-				  )4;
+				  )6;
 		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
 		  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+		  HAL_Delay(250);
 		  msg = received;
-		  HAL_UART_Transmit(&huart2, &msg, 1, HAL_MAX_DELAY);
+		  sprintf(buffer,"%u\r\n",msg);
+		  HAL_UART_Transmit(&huart2, buffer, 4, HAL_MAX_DELAY);
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 		  continue;
 	  }
 
