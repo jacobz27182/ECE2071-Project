@@ -97,7 +97,7 @@ int main(void)
 
   uint8_t msg;
   uint8_t received;
-  bool head = true;
+  bool head = false;
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
@@ -112,14 +112,16 @@ int main(void)
 		  msg = (uint8_t
 				  )4;
 		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
-		  HAL_UART_Receive(&huart2, &msg, 1, HAL_MAX_DELAY);
+		  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
+		  msg = received;
+		  HAL_UART_Transmit(&huart2, &msg, 1, HAL_MAX_DELAY);
 		  continue;
 	  }
 
-	  HAL_UART_Receive(&huart1, &msg, 1, HAL_MAX_DELAY);
+	  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(250);
-//	  msg = received;
+	  msg = received;
 	  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
