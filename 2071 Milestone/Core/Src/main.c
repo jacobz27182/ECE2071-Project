@@ -99,7 +99,7 @@ int main(void)
   uint8_t msg;
   char received;
   uint8_t ureceived;
-  bool head = true;
+  bool head = false;
   char buffer[6];
   const uint32_t n = 3;
   HAL_StatusTypeDef result;
@@ -144,7 +144,8 @@ int main(void)
 		  continue;
 	  }
 
-	  HAL_UART_Receive(&huart1, &ureceived, 1, HAL_MAX_DELAY);
+	  while (HAL_UART_Receive(&huart1, &ureceived, 1, n*260)!=HAL_OK){};
+//	  HAL_UART_Receive(&huart1, &ureceived, 1, HAL_MAX_DELAY);
 	  received = (char)ureceived;
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(250);
