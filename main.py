@@ -10,6 +10,9 @@ def main():
     try:
         with serial.Serial(port=port, baudrate=baudrate, timeout=0.5) as ser:
             print(f"Connected to {port} at {baudrate} baud")
+
+            #msg = str(6)
+            ser.write(b'B')
             print("Listening for STM32 output. Press Ctrl+C to stop.")
 
             while True:
@@ -17,7 +20,9 @@ def main():
                 if not line:
                     continue
                 try:
-                    print(line.decode("utf-8", errors="ignore").rstrip("\r\n"))
+                    #print(line)
+                    #print(line.decode("utf-8"))
+                    print(line.decode())
                 except Exception:
                     print(repr(line))
                 time.sleep(0.01)
