@@ -98,8 +98,10 @@ int main(void)
 
   uint8_t msg;
   uint8_t received;
-  bool head = false;
+  bool head = true;
   char buffer[6];
+  const uint32_t n = 3;
+  HAL_StatusTypeDef result;
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
@@ -111,15 +113,26 @@ int main(void)
   while (1)
   {
 	  if (head){
-		  msg = (uint8_t
-				  )6;
-		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
-		  HAL_UART_Receive(&huart1, &received, 1, HAL_MAX_DELAY);
+		  msg = (uint8_t)6;
+		  if (result!=HAL_TIMEOUT){
+			  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+		  	  }
+
+		  do {
+			  result = HAL_UART_Receive(&huart1, &received, 1, n*260);
+		  	  if (result == HAL_TIMEOUT){
+		  		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+		  		  received = msg;
+		  		  break;
+		  	  	  }
+		  	  }
+		  while ((received!=msg));
+
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 		  HAL_Delay(250);
 		  msg = received;
-		  sprintf(buffer,"%u\r\n",msg);
-		  HAL_UART_Transmit(&huart2, buffer, 4, HAL_MAX_DELAY);
+		  sprintf(buffer,"%u\r\n",received);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)buffer, 4, HAL_MAX_DELAY);
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 		  continue;
 	  }
