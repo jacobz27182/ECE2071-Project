@@ -95,19 +95,22 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  const uint32_t n = 2;
+  const char flag = 'Y';
 
-  uint8_t msg;
+  uint8_t t_flag = (uint8_t)'N';
   char received;
   uint8_t ureceived;
   bool head = false;
-  char buffer[6];
-  const uint32_t n = 3;
+  char buffer[258]; //255+3
+
+  uint8_t msg[256];//255 + 1 for size
   HAL_StatusTypeDef result;
 
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0); //Setup
 
   if (head){
-	  HAL_UART_Receive(&huart2, &msg, 1, HAL_MAX_DELAY);
+
   }
 
   /* USER CODE END 2 */
@@ -117,40 +120,73 @@ int main(void)
   while (1)
   {
 	  if (head){
-		  if (result!=HAL_TIMEOUT){
-			  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
-		  	  }
+		  HAL_UART_Receive(&huart2, msg, 1, HAL_MAX_DELAY); // get string length
+		  HAL_UART_Transmit(&huart2, &flag, 1, HAL_MAX_DELAY);
+		  HAL_UART_Receive(&huart2, msg+1, msg[0], HAL_MAX_DELAY); // get message
 
-		  do {
-			  result = HAL_UART_Receive(&huart1, &ureceived, 1, n*260);
-		  	  if (result == HAL_TIMEOUT){
-		  		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
-		  		  received = msg;
-		  		  break;
-		  	  	  }
-		  	  received = (char)ureceived;
-		  	  }
-		  while ((received!=msg));
+//		  msg[msg[0]] = (uint8_t)'I';
+//		  msg[msg[0]+1] = (uint8_t)'1';
+//		  msg[msg[0]+2] = (uint8_t)'4';
+//		  msg[msg[0]+3] = (uint8_t)'_';
+//		  msg[msg[0]+4] = (uint8_t)'1';
+//
+//		  msg[0] += 5;
+		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
+		  HAL_UART_Receive(&huart1, &t_flag, 1, HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 
-		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
-		  HAL_Delay(250);
-		  msg = (uint8_t)received;
-		  sprintf(buffer,"%c\r\n",received);
-		  if (result != HAL_TIMEOUT){
-			  HAL_UART_Transmit(&huart2, (uint8_t *)buffer, 4, HAL_MAX_DELAY);
-		  	  }
+		  HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY); // get string length
+		  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
+		  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
+		  msg[msg[0]] = (uint8_t)'\r';
+		  msg[msg[0]+1] = (uint8_t)'\n';
+		  msg[msg[0]+1] = (uint8_t)'\0';
+
+		  HAL_UART_Transmit(&huart2, msg, 1, HAL_MAX_DELAY);
+//		  if (result!=HAL_TIMEOUT){
+//			  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+//		  	  }
+//
+//		  do {
+//			  result = HAL_UART_Receive(&huart1, &ureceived, 1, n*260);
+//		  	  if (result == HAL_TIMEOUT){
+//		  		  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+//		  		  received = msg;
+//		  		  break;
+//		  	  	  }
+//		  	  received = (char)ureceived;
+//		  	  }
+//		  while ((received!=msg));
+//
+//		  if (result!=HAL_TIMEOUT){
+//			  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+//		  	  }
+//
+//		  HAL_Delay(250);
+//		  msg = (uint8_t)received;
+//		  sprintf(buffer,"%c\r\n",received);
+//		  if (result != HAL_TIMEOUT){
+//			  HAL_UART_Transmit(&huart2, (uint8_t *)buffer, 4, HAL_MAX_DELAY);
+//		  	  }
 
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 		  continue;
 	  }
 
-	  while (HAL_UART_Receive(&huart1, &ureceived, 1, n*260)!=HAL_OK){};
-//	  HAL_UART_Receive(&huart1, &ureceived, 1, HAL_MAX_DELAY);
-	  received = (char)ureceived;
+//	  while (HAL_UART_Receive(&huart1, &ureceived, 1, n*260)!=HAL_OK){};
+	  HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY); // get string length
+	  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
+	  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
+
+//	  received = (char)ureceived;
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(250);
-	  msg = received;
-	  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
+
+	  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
+	  HAL_UART_Receive(&huart1, &t_flag, 1, HAL_MAX_DELAY);
+	  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
+//	  msg = received;
+//	  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
     /* USER CODE END WHILE */
