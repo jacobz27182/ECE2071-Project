@@ -4,11 +4,13 @@ import time
 import keyboard
 
 def main():
-    port = serial.tools.list_ports.comports()[0]
+    verbose = True
+    port = serial.tools.list_ports.comports()[0].device
+    # print(port)
     baudrate = 115200
 
     try:
-        with serial.Serial(port=port, baudrate=baudrate, timeout=0.5) as ser:
+        with serial.Serial(port=port, baudrate=baudrate) as ser:
             print(f"Connected to {port} at {baudrate} baud")
             
             msg = input("Enter message to send: ").encode()
@@ -16,14 +18,15 @@ def main():
             # print("Listening for STM32 output. Press Ctrl+C to stop.")
 
             while True:
-                ser.write(str(len(msg)).encode())
-                ser.read() #reads 1 byte if no arguments fed
-                # print("Acklowledgement Receiveds.")
+                ser.write(bytes([len(msg)]))
+                if verbose: print(f"sent msg: {len(msg)}")
+                ack = ser.read()
+                if verbose: print(ack) 
+                if verbose: print("Acklowledgement Receiveds.")
                 ser.write(msg)
+                if verbose: print(f"Sent msg: {msg}")
 
                 line = ser.readline()
-                if not line:
-                    continue
 
                 print(line.decode())
                 

@@ -96,12 +96,13 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   const uint32_t n = 2;
+  const uint32_t HOLD_TIME = 2500; //default 250 but we can increase for debugging.
   const char flag = 'Y';
 
   uint8_t t_flag = (uint8_t)'N';
   char received;
   uint8_t ureceived;
-  bool head = false;
+  bool head = true;
   char buffer[258]; //255+3
 
   uint8_t msg[256];//255 + 1 for size
@@ -120,29 +121,36 @@ int main(void)
   while (1)
   {
 	  if (head){
-		  HAL_UART_Receive(&huart2, msg, 1, HAL_MAX_DELAY); // get string length
+		  while (HAL_UART_Receive(&huart2, msg, 1, 500) != HAL_OK); // get string length
 		  HAL_UART_Transmit(&huart2, &flag, 1, HAL_MAX_DELAY);
-		  HAL_UART_Receive(&huart2, msg+1, msg[0], HAL_MAX_DELAY); // get message
+		  HAL_UART_Receive(&huart2, msg+1, msg[0], 50); // get message
+
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+		  HAL_Delay(HOLD_TIME);
 
 //		  msg[msg[0]] = (uint8_t)'I';
 //		  msg[msg[0]+1] = (uint8_t)'1';
 //		  msg[msg[0]+2] = (uint8_t)'4';
 //		  msg[msg[0]+3] = (uint8_t)'_';
 //		  msg[msg[0]+4] = (uint8_t)'1';
-//
 //		  msg[0] += 5;
-		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
+
+		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY); //sending to the next stm
 		  HAL_UART_Receive(&huart1, &t_flag, 1, HAL_MAX_DELAY);
+//		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
+//		  HAL_Delay(HOLD_TIME);
 		  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 
-		  HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY); // get string length
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+
+		  while (HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY)!= HAL_OK); //receiving from stm
 		  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
-		  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
+		  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 		  msg[msg[0]] = (uint8_t)'\r';
 		  msg[msg[0]+1] = (uint8_t)'\n';
 		  msg[msg[0]+1] = (uint8_t)'\0';
 
-		  HAL_UART_Transmit(&huart2, msg, 1, HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, msg, 1, HAL_MAX_DELAY);//sending to pc
 //		  if (result!=HAL_TIMEOUT){
 //			  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
 //		  	  }
@@ -173,8 +181,7 @@ int main(void)
 		  continue;
 	  }
 
-//	  while (HAL_UART_Receive(&huart1, &ureceived, 1, n*260)!=HAL_OK){};
-	  HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY); // get string length
+	  while (HAL_UART_Receive(&huart1, msg, 1, 50)!=HAL_OK);//get string length
 	  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
 	  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
 
