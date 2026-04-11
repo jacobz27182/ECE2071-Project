@@ -97,11 +97,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  const uint32_t n = 2;
   const uint32_t HOLD_TIME = 250; //default 250 but we can increase for debugging.
-
+  const bool head = true;
+  const char ID = '0';
   const uint8_t flag_t = (uint8_t)'Y';
   uint8_t flag_r = (uint8_t)'N';
 
-  bool head = false;
 
   uint8_t msg[256];//255 + 1 for size
 //  HAL_StatusTypeDef result;
@@ -130,7 +130,7 @@ int main(void)
 		  msg[msg[0]+2] = (uint8_t)'1';
 		  msg[msg[0]+3] = (uint8_t)'4';
 		  msg[msg[0]+4] = (uint8_t)'_';
-		  msg[msg[0]+5] = (uint8_t)'1';
+		  msg[msg[0]+5] = (uint8_t)ID;
 		  msg[0] += 5;
 
 		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY); //sending to the next stm
