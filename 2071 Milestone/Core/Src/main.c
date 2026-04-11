@@ -96,13 +96,13 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   const uint32_t n = 2;
-  const uint32_t HOLD_TIME = 2500; //default 250 but we can increase for debugging.
+  const uint32_t HOLD_TIME = 250; //default 250 but we can increase for debugging.
   const char flag = 'Y';
 
   uint8_t t_flag = (uint8_t)'N';
   char received;
   uint8_t ureceived;
-  bool head = false;
+  bool head = true;
   char buffer[258]; //255+3
 
   uint8_t msg[256];//255 + 1 for size
@@ -149,10 +149,9 @@ int main(void)
 //		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
 //		  HAL_Delay(HOLD_TIME);
 
-		  msg[msg[0]] = (uint8_t)'\r';
-		  msg[msg[0]+1] = (uint8_t)'\n';
-		  msg[msg[0]+1] = (uint8_t)'\0';
-		  msg[0] += 3;
+		  msg[msg[0]+1] = (uint8_t)'\r';
+		  msg[msg[0]+2] = (uint8_t)'\n';
+		  msg[0] += 2;
 
 		  HAL_UART_Transmit(&huart2, msg+1, msg[0], HAL_MAX_DELAY);//sending to pc
 //		  if (result!=HAL_TIMEOUT){

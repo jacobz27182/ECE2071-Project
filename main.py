@@ -1,7 +1,5 @@
 import serial
 import serial.tools.list_ports
-import time
-import keyboard
 
 def main():
     verbose = True
@@ -21,8 +19,7 @@ def main():
                 ser.write(bytes([len(msg)]))
                 if verbose: print(f"sent msg: {len(msg)}")
                 ack = ser.read()
-                if verbose: print(ack) 
-                if verbose: print("Acklowledgement Receiveds.")
+                if verbose: print(f"received ack: {ack}") 
                 ser.write(msg)
                 if verbose: print(f"Sent msg: {msg}")
 
@@ -30,7 +27,7 @@ def main():
 
                 print(line.decode())
                 
-                keyboard.wait()
+                input("Press enter to continue\n")
 
     except serial.SerialException as exc:
         print("Serial error:", exc)
