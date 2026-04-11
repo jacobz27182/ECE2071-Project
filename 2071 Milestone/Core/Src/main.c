@@ -18,12 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stdbool.h"
-#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,6 +61,7 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 volatile bool head = false;
 volatile bool assigned = false;
+uint8_t msg_start;
 /* USER CODE END 0 */
 
 /**
@@ -114,9 +114,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Receive_IT(&huart2, msg, 1);
-	  HAL_UART_Receive_IT(&huart1, msg, 1);
+	  HAL_UART_Receive_IT(&huart2, &msg_start, 1);
+	  HAL_UART_Receive_IT(&huart1, &msg_start, 1);
 	  while (!assigned);
+	  msg[0] = msg_start;
+
 	  if (head){
 //		  while (HAL_UART_Receive(&huart2, msg, 1, 500) != HAL_OK); // get string length
 		  HAL_UART_Transmit(&huart2, &flag_t, 1, HAL_MAX_DELAY);
@@ -349,12 +351,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART2) {
+    HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
+	if (huart->Instance == USART2) {
         head = true;
     } else if (huart->Instance == USART1){
     	head = false;
     }
     assigned = true;
+//    HAL_Delay(HAL_MAX_DELAY);
 }
 /* USER CODE END 4 */
 
