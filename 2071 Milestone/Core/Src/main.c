@@ -102,7 +102,7 @@ int main(void)
   uint8_t t_flag = (uint8_t)'N';
   char received;
   uint8_t ureceived;
-  bool head = true;
+  bool head = false;
   char buffer[258]; //255+3
 
   uint8_t msg[256];//255 + 1 for size
@@ -144,13 +144,17 @@ int main(void)
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
 		  while (HAL_UART_Receive(&huart1, msg, 1, HAL_MAX_DELAY)!= HAL_OK); //receiving from stm
-		  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart1, (uint8_t *)&flag, 1, HAL_MAX_DELAY);
 		  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
+//		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
+//		  HAL_Delay(HOLD_TIME);
+
 		  msg[msg[0]] = (uint8_t)'\r';
 		  msg[msg[0]+1] = (uint8_t)'\n';
 		  msg[msg[0]+1] = (uint8_t)'\0';
+		  msg[0] += 3;
 
-		  HAL_UART_Transmit(&huart2, msg, 1, HAL_MAX_DELAY);//sending to pc
+		  HAL_UART_Transmit(&huart2, msg+1, msg[0], HAL_MAX_DELAY);//sending to pc
 //		  if (result!=HAL_TIMEOUT){
 //			  HAL_UART_Transmit(&huart1, &msg, 1, HAL_MAX_DELAY);
 //		  	  }
@@ -177,17 +181,19 @@ int main(void)
 //			  HAL_UART_Transmit(&huart2, (uint8_t *)buffer, 4, HAL_MAX_DELAY);
 //		  	  }
 
-		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+//		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 		  continue;
 	  }
 
 	  while (HAL_UART_Receive(&huart1, msg, 1, 50)!=HAL_OK);//get string length
+	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
+//	  HAL_Delay(HOLD_TIME);
 	  HAL_UART_Transmit(&huart1, &flag, 1, HAL_MAX_DELAY);
 	  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
 
 //	  received = (char)ureceived;
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
-	  HAL_Delay(250);
+	  HAL_Delay(HOLD_TIME);
 
 	  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
 	  HAL_UART_Receive(&huart1, &t_flag, 1, HAL_MAX_DELAY);
