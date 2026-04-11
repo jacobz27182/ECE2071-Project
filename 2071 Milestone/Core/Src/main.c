@@ -60,7 +60,8 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile bool head = false;
+volatile bool assigned = false;
 /* USER CODE END 0 */
 
 /**
@@ -97,20 +98,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  const uint32_t n = 2;
   const uint32_t HOLD_TIME = 250; //default 250 but we can increase for debugging.
-  const bool head = true;
+
   const char ID = '0';
   const uint8_t flag_t = (uint8_t)'Y';
   uint8_t flag_r = (uint8_t)'N';
-
 
   uint8_t msg[256];//255 + 1 for size
 //  HAL_StatusTypeDef result;
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0); //Setup
-
-  if (head){
-
-  }
 
   /* USER CODE END 2 */
 
@@ -118,8 +114,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_UART_Receive_IT(&huart2, msg, 1);
+	  HAL_UART_Receive_IT(&huart1, msg, 1);
+	  while (!assigned);
 	  if (head){
-		  while (HAL_UART_Receive(&huart2, msg, 1, 500) != HAL_OK); // get string length
+//		  while (HAL_UART_Receive(&huart2, msg, 1, 500) != HAL_OK); // get string length
 		  HAL_UART_Transmit(&huart2, &flag_t, 1, HAL_MAX_DELAY);
 		  HAL_UART_Receive(&huart2, msg+1, msg[0], 50); // get message
 
@@ -152,10 +151,11 @@ int main(void)
 		  msg[0] += 2;
 
 		  HAL_UART_Transmit(&huart2, msg+1, msg[0], HAL_MAX_DELAY);//sending to pc
+		  assigned = false;
 		  continue;
 	  }
 
-	  while (HAL_UART_Receive(&huart1, msg, 1, 50)!=HAL_OK);//get string length
+//	  while (HAL_UART_Receive(&huart1, msg, 1, 50)!=HAL_OK);//get string length
 //	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
 //	  HAL_Delay(HOLD_TIME);
 	  HAL_UART_Transmit(&huart1, &flag_t, 1, HAL_MAX_DELAY);
@@ -176,11 +176,12 @@ int main(void)
 	  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
-
+	  assigned = false;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
+
   /* USER CODE END 3 */
 }
 
@@ -347,7 +348,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
+        head = true;
+    } else if (huart->Instance == USART1){
+    	head = false;
+    }
+    assigned = true;
+}
 /* USER CODE END 4 */
 
 /**
