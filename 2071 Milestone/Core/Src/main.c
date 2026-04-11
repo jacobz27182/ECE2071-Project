@@ -101,7 +101,7 @@ int main(void)
   const uint8_t flag_t = (uint8_t)'Y';
   uint8_t flag_r = (uint8_t)'N';
 
-  bool head = true;
+  bool head = false;
 
   uint8_t msg[256];//255 + 1 for size
 //  HAL_StatusTypeDef result;
@@ -163,6 +163,13 @@ int main(void)
 
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(HOLD_TIME);
+
+	  msg[msg[0]+1] = (uint8_t)'I';
+	  msg[msg[0]+2] = (uint8_t)'1';
+	  msg[msg[0]+3] = (uint8_t)'4';
+	  msg[msg[0]+4] = (uint8_t)'_';
+	  msg[msg[0]+5] = (uint8_t)'1';
+	  msg[0] += 5;
 
 	  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
 	  HAL_UART_Receive(&huart1, &flag_r, 1, HAL_MAX_DELAY);
