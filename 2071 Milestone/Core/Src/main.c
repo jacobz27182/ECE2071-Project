@@ -64,7 +64,7 @@ volatile bool assigned = false;
 volatile uint8_t msg_size;
 uint8_t msg[255];
 
-void add_checksum(uint8_t *msg, uint8_t *msg_size){
+void add_checksum(uint8_t *msg, volatile uint8_t *msg_size){
 	if (*msg_size < 2) return; //needs at least 1 header and 1 data.
 
 	uint8_t checksum = msg[1];
@@ -75,8 +75,8 @@ void add_checksum(uint8_t *msg, uint8_t *msg_size){
 	(*msg_size)++;
 }
 
-bool check_checksum(uint8_t *msg, uint8_t *msg_size){
-	if (*msg_size < 2) return; //needs at least 1 header and 1 data.
+bool check_checksum(uint8_t *msg, volatile uint8_t *msg_size){
+	if (*msg_size < 2) return true; //needs at least 1 header and 1 data.
 
 	uint8_t checksum = msg[1];
 	for (int i=2; i<*msg_size-1; i++){
