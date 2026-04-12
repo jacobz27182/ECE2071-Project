@@ -102,11 +102,6 @@ int main(void)
   const uint32_t HOLD_TIME = 250; //default 250 but we can increase for debugging.
 
   const char ID = '0';
-//  const uint8_t flag_t = (uint8_t)'Y';
-//  uint8_t flag_r = (uint8_t)'N';
-
-
-//  HAL_StatusTypeDef result;
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0); //Setup
 
@@ -116,18 +111,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  HAL_UART_Receive_IT(&huart2, &msg_start, 1);
-//	  HAL_UART_Receive_IT(&huart1, &msg_start, 1);
 	  HAL_UARTEx_ReceiveToIdle_IT(&huart2, msg, 255);
 	  HAL_UARTEx_ReceiveToIdle_IT(&huart1, msg, 255);
-
 	  while (!assigned);
-//	  msg[0] = msg_start;
 
 	  if (head){
-//		  while (HAL_UART_Receive(&huart2, msg, 1, 500) != HAL_OK); // get string length
-//		  HAL_UART_Transmit(&huart2, &flag_t, 1, HAL_MAX_DELAY);
-//		  HAL_UART_Receive(&huart2, msg+1, msg[0], 50); // get message
 
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 		  HAL_Delay(HOLD_TIME);
@@ -138,22 +126,12 @@ int main(void)
 		  msg[msg_size+3] = (uint8_t)'_';
 		  msg[msg_size+4] = (uint8_t)ID;
 		  msg_size += 5;
-//
-//		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY); //sending to the next stm
-//		  HAL_UART_Receive(&huart1, &flag_r, 1, HAL_MAX_DELAY);
-////		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
-////		  HAL_Delay(HOLD_TIME);
-//		  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 
 		  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
 
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
 		  while (HAL_UARTEx_ReceiveToIdle_IT(&huart1, msg, 255)!= HAL_OK); //receiving from stm
-//		  HAL_UART_Transmit(&huart1, &flag_t, 1, HAL_MAX_DELAY);
-//		  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
-//		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
-//		  HAL_Delay(HOLD_TIME);
 
 		  msg[msg_size] = (uint8_t)'\r';
 		  msg[msg_size+1] = (uint8_t)'\n';
@@ -163,12 +141,6 @@ int main(void)
 		  assigned = false;
 		  continue;
 	  }
-
-//	  while (HAL_UART_Receive(&huart1, msg, 1, 50)!=HAL_OK);//get string length
-//	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1); //on if the 2nd stm receives our syn
-//	  HAL_Delay(HOLD_TIME);
-//	  HAL_UART_Transmit(&huart1, &flag_t, 1, HAL_MAX_DELAY);
-//	  HAL_UART_Receive(&huart1, msg+1, msg[0], HAL_MAX_DELAY); // get message
 
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(HOLD_TIME);
@@ -180,9 +152,6 @@ int main(void)
 	  msg[msg_size+4] = (uint8_t)ID;
 	  msg_size += 5;
 
-//	  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
-//	  HAL_UART_Receive(&huart1, &flag_r, 1, HAL_MAX_DELAY);
-//	  HAL_UART_Transmit(&huart1, msg+1, msg[0], HAL_MAX_DELAY);
 	  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 	  assigned = false;
