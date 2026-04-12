@@ -101,7 +101,7 @@ int main(void)
 //  const uint32_t n = 2;
   const uint32_t HOLD_TIME = 250; //default 250 but we can increase for debugging.
 
-  const char ID = '0';
+  uint8_t *ID = msg;
 
   HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0); //Setup
 
@@ -124,7 +124,7 @@ int main(void)
 		  msg[msg_size+1] = (uint8_t)'1';
 		  msg[msg_size+2] = (uint8_t)'4';
 		  msg[msg_size+3] = (uint8_t)'_';
-		  msg[msg_size+4] = (uint8_t)ID;
+		  msg[msg_size+4] = (*ID)++;
 		  msg_size += 5;
 
 		  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
@@ -149,7 +149,7 @@ int main(void)
 	  msg[msg_size+1] = (uint8_t)'1';
 	  msg[msg_size+2] = (uint8_t)'4';
 	  msg[msg_size+3] = (uint8_t)'_';
-	  msg[msg_size+4] = (uint8_t)ID;
+	  msg[msg_size+4] = (*ID)++;
 	  msg_size += 5;
 
 	  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
