@@ -16,10 +16,10 @@ def main():
             # print("Listening for STM32 output. Press Ctrl+C to stop.")
 
             while True:
-                ser.write(bytes([len(msg)]))
-                if verbose: print(f"sent msg: {len(msg)}")
-                ack = ser.read()
-                if verbose: print(f"received ack: {ack}") 
+                # ser.write(bytes([len(msg)]))
+                # if verbose: print(f"sent msg: {len(msg)}")
+                # ack = ser.read()
+                # if verbose: print(f"received ack: {ack}") 
                 ser.write(msg)
                 if verbose: print(f"Sent msg: {msg}")
 

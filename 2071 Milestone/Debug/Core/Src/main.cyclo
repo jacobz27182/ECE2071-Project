@@ -3,5 +3,5 @@
 ../Core/Src/main.c:262:13:MX_USART1_UART_Init	2
 ../Core/Src/main.c:297:13:MX_USART2_UART_Init	2
 ../Core/Src/main.c:332:13:MX_GPIO_Init	1
-../Core/Src/main.c:360:6:HAL_UART_RxEventCallback	4
+../Core/Src/main.c:360:6:HAL_UARTEx_RxEventCallback	4
 ../Core/Src/main.c:380:6:Error_Handler	1

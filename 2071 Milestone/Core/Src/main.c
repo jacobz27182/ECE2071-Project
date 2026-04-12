@@ -357,7 +357,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_UART_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size) {
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size) {
 //    HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 	if (!assigned){
 		if (huart->Instance == USART2) {
