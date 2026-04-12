@@ -25,7 +25,7 @@ def main():
 
                 line = ser.readline()
 
-                print(line.decode())
+                print(line.decode()[1:])
                 
                 input("Press enter to continue\n")
 
