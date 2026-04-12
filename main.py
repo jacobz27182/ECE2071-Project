@@ -11,7 +11,7 @@ def main():
         with serial.Serial(port=port, baudrate=baudrate) as ser:
             print(f"Connected to {port} at {baudrate} baud")
             
-            msg = input("Enter message to send: ").encode()
+            msg = ("0"+input("Enter message to send: ")).encode()
  
             # print("Listening for STM32 output. Press Ctrl+C to stop.")
 
