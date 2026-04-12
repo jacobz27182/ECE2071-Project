@@ -64,6 +64,26 @@ volatile bool assigned = false;
 volatile uint8_t msg_size;
 uint8_t msg[255];
 
+void add_checksum(uint8_t *msg, uint8_t *msg_size){
+	if (*msg_size < 2) return; //needs at least 1 header and 1 data.
+
+	uint8_t checksum = msg[1];
+	for (int i=2; i<*msg_size; i++){
+		checksum ^= msg[i];
+	}
+	msg[*msg_size] = checksum;
+	(*msg_size)++;
+}
+
+bool check_checksum(uint8_t *msg, uint8_t *msg_size){
+	if (*msg_size < 2) return; //needs at least 1 header and 1 data.
+
+	uint8_t checksum = msg[1];
+	for (int i=2; i<*msg_size-1; i++){
+		checksum ^= msg[i];
+	}
+	return(checksum == msg[(*msg_size)-1]);
+}
 /* USER CODE END 0 */
 
 /**
@@ -127,11 +147,17 @@ int main(void)
 		  msg[msg_size+4] = (*ID)++;
 		  msg_size += 5;
 
+		  add_checksum(msg,&msg_size);
 		  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
-
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
 		  while (HAL_UARTEx_ReceiveToIdle_IT(&huart1, msg, 255)!= HAL_OK); //receiving from stm
+
+		  if (!check_checksum(msg,&msg_size)){
+			  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+			  while(1);
+		  }
+
 
 		  msg[msg_size] = (uint8_t)'\r';
 		  msg[msg_size+1] = (uint8_t)'\n';
@@ -140,6 +166,11 @@ int main(void)
 		  HAL_UART_Transmit(&huart2, msg, msg_size, HAL_MAX_DELAY);//sending to pc
 		  assigned = false;
 		  continue;
+	  }
+
+	  if (!check_checksum(msg,&msg_size)){
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
+		  while(1);
 	  }
 
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
@@ -152,8 +183,10 @@ int main(void)
 	  msg[msg_size+4] = (*ID)++;
 	  msg_size += 5;
 
+	  add_checksum(msg,&msg_size);
 	  HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
+
 	  assigned = false;
     /* USER CODE END WHILE */
 
