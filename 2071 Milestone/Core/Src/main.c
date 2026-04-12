@@ -132,12 +132,12 @@ int main(void)
 		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 		  HAL_Delay(HOLD_TIME);
 
-//		  msg[msg[0]+1] = (uint8_t)'I';
-//		  msg[msg[0]+2] = (uint8_t)'1';
-//		  msg[msg[0]+3] = (uint8_t)'4';
-//		  msg[msg[0]+4] = (uint8_t)'_';
-//		  msg[msg[0]+5] = (uint8_t)ID;
-//		  msg[0] += 5;
+		  msg[msg_size] = (uint8_t)'I';
+		  msg[msg_size+1] = (uint8_t)'1';
+		  msg[msg_size+2] = (uint8_t)'4';
+		  msg[msg_size+3] = (uint8_t)'_';
+		  msg[msg_size+4] = (uint8_t)ID;
+		  msg_size += 5;
 //
 //		  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY); //sending to the next stm
 //		  HAL_UART_Receive(&huart1, &flag_r, 1, HAL_MAX_DELAY);
@@ -173,12 +173,12 @@ int main(void)
 	  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
 	  HAL_Delay(HOLD_TIME);
 
-//	  msg[msg[0]+1] = (uint8_t)'I';
-//	  msg[msg[0]+2] = (uint8_t)'1';
-//	  msg[msg[0]+3] = (uint8_t)'4';
-//	  msg[msg[0]+4] = (uint8_t)'_';
-//	  msg[msg[0]+5] = (uint8_t)'1';
-//	  msg[0] += 5;
+	  msg[msg_size] = (uint8_t)'I';
+	  msg[msg_size+1] = (uint8_t)'1';
+	  msg[msg_size+2] = (uint8_t)'4';
+	  msg[msg_size+3] = (uint8_t)'_';
+	  msg[msg_size+4] = (uint8_t)ID;
+	  msg_size += 5;
 
 //	  HAL_UART_Transmit(&huart1, msg, 1, HAL_MAX_DELAY);
 //	  HAL_UART_Receive(&huart1, &flag_r, 1, HAL_MAX_DELAY);
