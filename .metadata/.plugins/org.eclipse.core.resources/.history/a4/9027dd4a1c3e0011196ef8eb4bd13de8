@@ -106,7 +106,6 @@ int main(void)
   {
 	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
 	  b_avg = (b1+b2)/2;
-	  HAL_UART_Transmit(&huart2, &b_avg, 1, HAL_MAX_DELAY);
 	  b1 = b2;
 
     /* USER CODE END WHILE */

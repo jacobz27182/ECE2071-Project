@@ -96,7 +96,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint8_t b1;
   uint8_t b2;
-  uint8_t b_avg;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,9 +104,6 @@ int main(void)
   while (1)
   {
 	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
-	  b_avg = (b1+b2)/2;
-	  HAL_UART_Transmit(&huart2, &b_avg, 1, HAL_MAX_DELAY);
-	  b1 = b2;
 
     /* USER CODE END WHILE */
 
