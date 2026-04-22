@@ -6,8 +6,8 @@ import time
 
 
 def main():
-    # port = serial.tools.list_ports.comports()[0].device
-    port = "COM10"
+    port = serial.tools.list_ports.comports()[0].device
+    # port = "COM10"
     baudrate = 115200
     SAMPLE_RATE = 9200 
 
