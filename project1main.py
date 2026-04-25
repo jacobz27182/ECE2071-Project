@@ -1,4 +1,5 @@
 import serial
+from serial.tools.list_ports import comports
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,8 +7,8 @@ import wave
 import csv
 
 def serial_initiate():
-    # port = serial.tools.list_ports.comports()[0].device
-    port = "COM10"
+    port = serial.tools.list_ports.comports()[0].device
+    # port = "COM10"
     baudrate = 115200
 
     try:
@@ -59,7 +60,7 @@ def save_csv(filename, data, sampleRate):
             writer.writerow([d])
     print(f"Data saved to {filename}")
 
-def save_plot(data, filename,sampleRate):
+def save_plot(filename, data, sampleRate):
     time_axis = np.arange(len(data))/sampleRate # create time axis based on sample rate and data length
     plt.figure()
     plt.plot(time_axis, data)
@@ -70,9 +71,17 @@ def save_plot(data, filename,sampleRate):
     print(f"Plot saved to {filename}")
 
 def manual_mode(ser):
-    duration = float(input("Enter recording duration in seconds: "))
-    sampleRate = 9200
-    sampleRate = int(input(f"Enter sample rate (default {sampleRate} Hz tested on the lab): ") or sampleRate)
+    while True:
+        try:
+            duration = float(input("Enter recording duration in seconds: "))
+            if duration < 0: raise ValueError
+            break
+        except ValueError:  
+            print("Please enter a positive float")
+            continue
+        except KeyboardInterrupt:
+            return
+        
     data = record_audio(ser, duration)
     if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
         data = (data - data.min()) / (data.max() - data.min()) # scale to 0-1
@@ -80,15 +89,11 @@ def manual_mode(ser):
         data = np.zeros_like(data) # if there is no variation, just create an array of zeros
     data = data * 255                    # scale to 0-255
     data = data.astype(np.uint8)         # convert to uint8 type
-    save_wave("manual_recording.wav", data, sampleRate)
-    save_csv("manual_recording.csv", data, sampleRate)
-    save_plot(data, "manual_recording.png", sampleRate)
-
+    return data
 
 def distance_trigger_mode(ser):
     print("Distance Trigger Mode (press Ctrl+C to exit)")
     stopShortTime = 1.0
-    sampleRate = int(input("Enter sample rate (default 9200 Hz tested on the lab): ") or 9200)
     try:
         while True:
             print("Waiting for trigger...")
@@ -119,14 +124,11 @@ def distance_trigger_mode(ser):
                     data = data.astype(np.uint8)         # convert to uint8 type
                 else:
                     data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
-                
-                save_wave(f"distance_trigger_Team14.wav", data, sampleRate)
-                save_csv(f"distance_trigger_Team14.csv", data, sampleRate)
-                save_plot(data, f"distance_trigger_Team14.png", sampleRate)
+                return data
+            
     except KeyboardInterrupt:
         print("\rExiting Distance Trigger Mode... \n")
-                
-
+        return
                 
             
 
@@ -152,16 +154,45 @@ def main():
             print("\n===== AUDIO SYSTEM MENU =====")
             print("1. Manual Recording Mode")
             print("2. Distance Trigger Mode")
-            print("3. Exit")
+            print("3. Exit")            
             choice = input("Enter your choice (1-3): ")
 
+            
+            data = None
             match choice:
                 case "1":
                     print("Manual Recording Mode selected.")
-                    manual_mode(ser)
+                    contFlag = True
+                    while True:
+                        try:
+                            sampleRate = int(input(f"Enter sample rate (default {9200} Hz tested on the lab): ") or 9200)
+                            if sampleRate<=0: raise ValueError
+                            break
+                        except ValueError:
+                            print("Please enter a positive integer")
+                        except KeyboardInterrupt:
+                            contFlag = False
+                            break
+
+                    if not contFlag: continue
+                    data = manual_mode(ser)
+
                 case "2":
                     print("Distance Trigger Mode selected.")
-                    distance_trigger_mode(ser)
+                    contFlag = True
+                    while True:
+                        try:
+                            sampleRate = int(input(f"Enter sample rate (default {9200} Hz tested on the lab): ") or 9200)
+                            if sampleRate<=0: raise ValueError
+                            break
+                        except ValueError:
+                            print("Please enter a positive integer")
+                        except KeyboardInterrupt:
+                            contFlag = False
+                            break
+
+                    if not contFlag: continue
+                    data = distance_trigger_mode(ser)
                     # Implement distance trigger functionality here
                 case "3":
                     print("Exiting the program.")
@@ -170,7 +201,33 @@ def main():
                     break
                 case _:
                     print("Invalid choice. Please enter a number between 1 to 3")
-                
+                    continue
+            
+            while data is not None:
+                print("Possible File Formats:")
+                print("1. wav")
+                print("2. png")
+                print("3. csv")
+                print("4. return to main menu")
+                try:
+                    filetype = input("Enter your choice (1-3): ")
+                    match filetype:
+                        case "1":
+                            print("Saving as wav file")
+                            save_wave(f"Team_I_14_{sampleRate}.wav",data,sampleRate)
+                        case "2":
+                            print("Saving as png file")
+                            save_plot(f"Team_I_14_{sampleRate}", data, sampleRate)
+                        case "3":
+                            print("Saving as csv file")
+                            save_csv(f"Team_I_14_{sampleRate}.csv", data, sampleRate)
+                        case "4":
+                            break
+                        case _:
+                            print("Invalid choice. Please enter a number between 1 to 3")
+                            continue
+                except KeyboardInterrupt:
+                    break
 
     except KeyboardInterrupt:
         print("\rProgram stopped. Exiting gracefully... \n")
