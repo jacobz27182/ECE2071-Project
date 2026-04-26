@@ -93,41 +93,42 @@ def manual_mode(ser):
 
 def distance_trigger_mode(ser):
     print("Distance Trigger Mode (press Ctrl+C to exit)")
-    stopShortTime = 1.0
+    stopShortTime = 1.0 
+
+    ser.reset_input_buffer()
     try:
-        while True:
-            print("Waiting for trigger...")
-            trigger = input("simulate triggered?(0/1): ")
-            if trigger == "1":
-                print("Trigger detected! Starting recording...")
-                data = []
-                t1 = time.time()
-                tf = t1
-                while True:
-                    still_triggered = input("still triggered?(0/1): ")
-                    if still_triggered == "1":
-                        tf = time.time()
-                        
-                    if ser.in_waiting:
-                        b = ser.read()
-                        data.append(b[0])
-                    if time.time() - tf > stopShortTime:
-                        print("Trigger released for too long. Stopping recording.")
-                        break
-                data = np.array(data) # convert to numpy array because we need to do some processing on it
-                if len(data) == 0:
-                    print("No data recorded. Returning to trigger mode.")
-                    continue
-                if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
-                    data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
-                    data = data * 255                    # scale to 0-255
-                    data = data.astype(np.uint8)         # convert to uint8 type
-                else:
-                    data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
-                return data
+        data = []
+        ser.timeout = 20
+        b = ser.read() #only start timing after the first byte is received
+        if len(b) == 0:
+            print("Timed out")
+            return
+        
+        print("Recording Begun")
+        data.append(b[0]) 
+        ser.timeout = stopShortTime
+        while True: 
+            b = ser.read()
+            if len(b)==0: break #timed out
+            data.append(b[0])
+
+        print("Recording Finished")
+        data = np.array(data) # convert to numpy array because we need to do some processing on it
+
+        if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
+            data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
+            data = data * 255                    # scale to 0-255
+            data = data.astype(np.uint8)         # convert to uint8 type
+        else:
+            data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
+
+        ser.timeout = None
+        return data
             
+        
     except KeyboardInterrupt:
         print("\rExiting Distance Trigger Mode... \n")
+        ser.timeout = None
         return
                 
             
@@ -139,6 +140,7 @@ def main():
     dots = ["", ".", "..", "...", "....",  "....."]
     idx = 0
     print("Press Ctrl+C to stop loading data.")
+    sampleRate = 9200
     try:
         Flag = True
         round = 0
@@ -162,38 +164,16 @@ def main():
             match choice:
                 case "1":
                     print("Manual Recording Mode selected.")
-                    contFlag = True
-                    while True:
-                        try:
-                            sampleRate = int(input(f"Enter sample rate (default {9200} Hz tested on the lab): ") or 9200)
-                            if sampleRate<=0: raise ValueError
-                            break
-                        except ValueError:
-                            print("Please enter a positive integer")
-                        except KeyboardInterrupt:
-                            contFlag = False
-                            break
 
-                    if not contFlag: continue
+                    ser.write("m".encode()) #send this flag to STM2
                     data = manual_mode(ser)
 
                 case "2":
                     print("Distance Trigger Mode selected.")
-                    contFlag = True
-                    while True:
-                        try:
-                            sampleRate = int(input(f"Enter sample rate (default {9200} Hz tested on the lab): ") or 9200)
-                            if sampleRate<=0: raise ValueError
-                            break
-                        except ValueError:
-                            print("Please enter a positive integer")
-                        except KeyboardInterrupt:
-                            contFlag = False
-                            break
 
-                    if not contFlag: continue
+                    ser.write("d".encode()) #send this flag to STM2
                     data = distance_trigger_mode(ser)
-                    # Implement distance trigger functionality here
+
                 case "3":
                     print("Exiting the program.")
                     if ser is not None and ser.is_open:
@@ -229,11 +209,14 @@ def main():
                 except KeyboardInterrupt:
                     break
 
-    except KeyboardInterrupt:
-        print("\rProgram stopped. Exiting gracefully... \n")
-        if ser is not None and ser.is_open:
-            ser.close()
-
+    except (KeyboardInterrupt, EOFError):
+        try:
+            print("\rProgram stopped. Exiting gracefully... \n")
+            if ser is not None and ser.is_open:
+                ser.close()
+        except KeyboardInterrupt:
+            if ser is not None and ser.is_open:
+                ser.close()
 
 if __name__ == "__main__":
     main()
