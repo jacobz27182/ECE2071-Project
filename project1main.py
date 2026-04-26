@@ -32,8 +32,8 @@ def record_audio(ser, duration):
     while time.time() - t1 < duration:
         b = ser.read()
         data.append(b[0])
-        print(f"\rRecording{dots[idx % len(dots)]}", end="", flush=True)
-        idx += 1
+        # print(f"\rRecording{dots[idx % len(dots)]}", end="", flush=True)
+        # idx += 1
         #time.sleep(0.5)
                 
     print(f"Recording completed in {time.time() - t1:.2f} seconds")
@@ -127,9 +127,9 @@ def distance_trigger_mode(ser):
             
         
     except KeyboardInterrupt:
-        print("\rExiting Distance Trigger Mode... \n")
+        print("\rManual Exit Distance Trigger Mode... \n")
         ser.timeout = None
-        return
+        return data
                 
             
 

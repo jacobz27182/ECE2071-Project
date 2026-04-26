@@ -60,8 +60,8 @@ all: main-build
 main-build: STM1.elf secondary-outputs
 
 # Tool invocations
-STM1.elf STM1.map: $(OBJS) $(USER_OBJS) D:\ECE2071\Project1\ECE2071-Project\STM1\STM32L432KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\ECE2071\Project1\ECE2071-Project\STM1\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM1.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+STM1.elf STM1.map: $(OBJS) $(USER_OBJS) C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071\ Project\ECE2071-Project\STM1\STM32L432KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071 Project\ECE2071-Project\STM1\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM1.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
