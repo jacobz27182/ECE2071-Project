@@ -192,3 +192,136 @@ Finished building: default.size.stdout
  
 Finished building: Debug.list
  
+17:15:07 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L432xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:113:11: warning: implicit declaration of function 'sprintf' [-Wimplicit-function-declaration]
+  113 |           sprintf("%u\r\n",b2);
+      |           ^~~~~~~
+../Core/Src/main.c:21:1: note: include '<stdio.h>' or provide a declaration of 'sprintf'
+   20 | #include "main.h"
+  +++ |+#include <stdio.h>
+   21 | 
+../Core/Src/main.c:113:11: warning: incompatible implicit declaration of built-in function 'sprintf' [-Wbuiltin-declaration-mismatch]
+  113 |           sprintf("%u\r\n",b2);
+      |           ^~~~~~~
+../Core/Src/main.c:113:11: note: include '<stdio.h>' or provide a declaration of 'sprintf'
+../Core/Src/main.c:113:28: warning: passing argument 2 of 'sprintf' makes pointer from integer without a cast [-Wint-conversion]
+  113 |           sprintf("%u\r\n",b2);
+      |                            ^~
+      |                            |
+      |                            uint8_t {aka unsigned char}
+../Core/Src/main.c:113:28: note: expected 'const char *' but argument is of type 'uint8_t' {aka 'unsigned char'}
+../Core/Src/main.c:114:38: warning: pointer targets in passing argument 2 of 'HAL_UART_Transmit' differ in signedness [-Wpointer-sign]
+  114 |           HAL_UART_Transmit(&huart2, msg, 6, HAL_MAX_DELAY);
+      |                                      ^~~
+      |                                      |
+      |                                      char *
+In file included from ../Core/Inc/stm32l4xx_hal_conf.h:450,
+                 from ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:29,
+                 from ../Core/Inc/main.h:30,
+                 from ../Core/Src/main.c:20:
+../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h:1694:79: note: expected 'const uint8_t *' {aka 'const unsigned char *'} but argument is of type 'char *'
+ 1694 | HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout);
+      |                                                                ~~~~~~~~~~~~~~~^~~~~
+../Core/Src/main.c:99:11: warning: variable 'b_avg' set but not used [-Wunused-but-set-variable]
+   99 |   uint8_t b_avg;
+      |           ^~~~~
+arm-none-eabi-gcc -o "STM2.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071 Project\ECE2071-Project\STM2\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM2.elf
+ 
+arm-none-eabi-size  STM2.elf 
+arm-none-eabi-objdump -h -S STM2.elf  > "STM2.list"
+   text	   data	    bss	    dec	    hex	filename
+  17364	     92	   2140	  19596	   4c8c	STM2.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM2.list
+ 
+17:15:53 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-size  STM2.elf 
+   text	   data	    bss	    dec	    hex	filename
+  17364	     92	   2140	  19596	   4c8c	STM2.elf
+Finished building: default.size.stdout
+ 
+17:18:24 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-size  STM2.elf 
+   text	   data	    bss	    dec	    hex	filename
+  17364	     92	   2140	  19596	   4c8c	STM2.elf
+Finished building: default.size.stdout
+ 
+17:21:52 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L432xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "STM2.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071 Project\ECE2071-Project\STM2\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM2.elf
+ 
+arm-none-eabi-size  STM2.elf 
+arm-none-eabi-objdump -h -S STM2.elf  > "STM2.list"
+   text	   data	    bss	    dec	    hex	filename
+  14740	     12	   1804	  16556	   40ac	STM2.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM2.list
+ 
+17:25:55 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L432xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "STM2.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071 Project\ECE2071-Project\STM2\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM2.elf
+ 
+arm-none-eabi-size  STM2.elf 
+arm-none-eabi-objdump -h -S STM2.elf  > "STM2.list"
+   text	   data	    bss	    dec	    hex	filename
+  14748	     12	   1804	  16564	   40b4	STM2.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM2.list
+ 
+17:26:21 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-size  STM2.elf 
+   text	   data	    bss	    dec	    hex	filename
+  14748	     12	   1804	  16564	   40b4	STM2.elf
+Finished building: default.size.stdout
+ 
+17:33:11 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-size  STM2.elf 
+   text	   data	    bss	    dec	    hex	filename
+  14748	     12	   1804	  16564	   40b4	STM2.elf
+Finished building: default.size.stdout
+ 
+17:42:55 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L432xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:110:28: error: expected ';' before 'HAL_UART_Transmit'
+  110 |           b_avg = (b1+b2)/2
+      |                            ^
+      |                            ;
+  111 | //        b_avg = b2;
+  112 |           HAL_UART_Transmit(&huart2, &b_avg, 1, HAL_MAX_DELAY);
+      |           ~~~~~~~~~~~~~~~~~ 
+../Core/Src/main.c:99:11: warning: variable 'b_avg' set but not used [-Wunused-but-set-variable]
+   99 |   uint8_t b_avg;
+      |           ^~~~~
+make: *** [Core/Src/subdir.mk:34: Core/Src/main.o] Error 1
+"make -j12 all" terminated with exit code 2. Build might be incomplete.
+17:43:10 **** Incremental Build of configuration Debug for project STM2 ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L432xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "STM2.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\Elitebook\STM32CubeIDE\workspace_1.18.0\ECE2071 Project\ECE2071-Project\STM2\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: STM2.elf
+ 
+arm-none-eabi-size  STM2.elf 
+arm-none-eabi-objdump -h -S STM2.elf  > "STM2.list"
+   text	   data	    bss	    dec	    hex	filename
+  14756	     12	   1804	  16572	   40bc	STM2.elf
+Finished building: default.size.stdout
+ 
+Finished building: STM2.list
+ 

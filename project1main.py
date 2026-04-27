@@ -31,7 +31,6 @@ def record_audio(ser, duration):
         b = ser.read()
         data.append(b[0])
                 
-    print(f"Recording completed in {time.time() - t1:.2f} seconds")
     return np.array(data)
 
 def save_wave(filename, data, sampleRate):
