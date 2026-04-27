@@ -27,14 +27,9 @@ def serial_initiate():
 def record_audio(ser, duration):
     data = []
     t1 = time.time()
-    dots = ["", ".", "..", "...", "....",  "....."]
-    idx = 0
     while time.time() - t1 < duration:
         b = ser.read()
         data.append(b[0])
-        # print(f"\rRecording{dots[idx % len(dots)]}", end="", flush=True)
-        # idx += 1
-        #time.sleep(0.5)
                 
     print(f"Recording completed in {time.time() - t1:.2f} seconds")
     return np.array(data)
@@ -190,7 +185,7 @@ def main():
                 print("3. csv")
                 print("4. return to main menu")
                 try:
-                    filetype = input("Enter your choice (1-3): ")
+                    filetype = input("Enter your choice (1-4): ")
                     match filetype:
                         case "1":
                             print("Saving as wav file")

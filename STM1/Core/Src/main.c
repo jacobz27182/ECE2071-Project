@@ -52,8 +52,8 @@ UART_HandleTypeDef huart2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 static void SPI1_WriteByte(uint8_t tx_byte);
 /* USER CODE END PFP */
@@ -93,8 +93,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_ADC1_Init();
   MX_SPI1_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -108,6 +108,7 @@ int main(void)
 	  HAL_ADC_PollForConversion(&hadc1,HAL_MAX_DELAY);
 	  uint8_t sampledValue = (uint8_t)HAL_ADC_GetValue(&hadc1);
 	  SPI1_WriteByte(sampledValue);
+//	  HAL_UART_Transmit(&huart2, &sampledValue, 1, HAL_MAX_DELAY);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

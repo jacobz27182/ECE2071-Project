@@ -102,12 +102,17 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_SPI_Receive(&hspi1, &b1, 1, HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
   while (1)
   {
 	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
-	  b_avg = (b1+b2)/2;
+//	  b_avg = (b1+b2)/2
+	  b_avg = b2;
 	  HAL_UART_Transmit(&huart2, &b_avg, 1, HAL_MAX_DELAY);
-	  b1 = b2;
+//	  char msg[6];
+//	  sprintf("%u\r\n",b2);
+//	  HAL_UART_Transmit(&huart2, msg, 6, HAL_MAX_DELAY);
+//	  b1 = b2;
 
     /* USER CODE END WHILE */
 
