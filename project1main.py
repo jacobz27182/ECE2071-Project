@@ -131,8 +131,6 @@ def main():
     ser = serial_initiate()
     if ser is None:
         return
-    dots = ["", ".", "..", "...", "....",  "....."]
-    idx = 0
     print("Press Ctrl+C to stop loading data.")
     sampleRate = 9200
     try:
@@ -185,16 +183,17 @@ def main():
                 print("4. return to main menu")
                 try:
                     filetype = input("Enter your choice (1-4): ")
+                    timestamp = int(time.time())
                     match filetype:
                         case "1":
                             print("Saving as wav file")
-                            save_wave(f"Team_I_14_{sampleRate}.wav",data,sampleRate)
+                            save_wave(f"Team_I_14_{sampleRate}_{timestamp}.wav",data,sampleRate)
                         case "2":
                             print("Saving as png file")
-                            save_plot(f"Team_I_14_{sampleRate}", data, sampleRate)
+                            save_plot(f"Team_I_14_{sampleRate}_{timestamp}", data, sampleRate)
                         case "3":
                             print("Saving as csv file")
-                            save_csv(f"Team_I_14_{sampleRate}.csv", data, sampleRate)
+                            save_csv(f"Team_I_14_{sampleRate}_{timestamp}.csv", data, sampleRate)
                         case "4":
                             break
                         case _:
