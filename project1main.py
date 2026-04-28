@@ -26,6 +26,7 @@ def serial_initiate():
 
 def record_audio(ser, duration):
     data = []
+    ser.reset_input_buffer()
     t1 = time.time()
     while time.time() - t1 < duration:
         b = ser.read()
@@ -126,7 +127,6 @@ def distance_trigger_mode(ser):
         return data
                 
             
-
 def main():
     ser = serial_initiate()
     if ser is None:
@@ -134,17 +134,7 @@ def main():
     print("Press Ctrl+C to stop loading data.")
     sampleRate = 9200
     try:
-        Flag = True
-        round = 0
         while True:
-            '''
-            while Flag:
-                print(f"\rLoading{dots[idx % len(dots)]}", end="", flush=True)
-                idx += 1
-                round = round + 1
-                time.sleep(0.5)
-                if round > 10:
-                    Flag = False'''
             print("\n===== AUDIO SYSTEM MENU =====")
             print("1. Manual Recording Mode")
             print("2. Distance Trigger Mode")

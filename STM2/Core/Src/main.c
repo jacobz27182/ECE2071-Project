@@ -106,6 +106,7 @@ int main(void)
   HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
   while (1)
   {
+	  __HAL_UART_FLUSH_DRREGISTER(&huart2);
 	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
 	  b_avg = (b1+b2)/2;
 //	  b_avg = b2;
