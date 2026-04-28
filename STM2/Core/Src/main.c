@@ -106,7 +106,6 @@ int main(void)
   HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
   while (1)
   {
-	  __HAL_UART_FLUSH_DRREGISTER(&huart2);
 	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
 	  b_avg = (b1+b2)/2;
 //	  b_avg = b2;
@@ -238,7 +237,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;

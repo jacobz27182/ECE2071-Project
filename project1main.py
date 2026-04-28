@@ -9,7 +9,7 @@ import csv
 def serial_initiate():
     port = serial.tools.list_ports.comports()[0].device
     # port = "COM10"
-    baudrate = 115200
+    baudrate = 921600
 
     try:
         ser = serial.Serial(port=port, baudrate=baudrate)
@@ -26,8 +26,8 @@ def serial_initiate():
 
 def record_audio(ser, duration):
     data = []
-    ser.reset_input_buffer()
     t1 = time.time()
+    ser.reset_input_buffer()
     while time.time() - t1 < duration:
         b = ser.read()
         data.append(b[0])
@@ -132,7 +132,7 @@ def main():
     if ser is None:
         return
     print("Press Ctrl+C to stop loading data.")
-    sampleRate = 9200
+    sampleRate = 30000
     try:
         while True:
             print("\n===== AUDIO SYSTEM MENU =====")
