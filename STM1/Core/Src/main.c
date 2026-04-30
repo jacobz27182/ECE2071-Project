@@ -106,8 +106,9 @@ int main(void)
   {
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1,HAL_MAX_DELAY);
-	  uint8_t sampledValue = (uint8_t)HAL_ADC_GetValue(&hadc1);
-	  SPI1_WriteByte(sampledValue);
+	  uint16_t sampledValue = (uint16_t)HAL_ADC_GetValue(&hadc1);
+	  SPI1_WriteByte((uint8_t)sampledValue>>8); //SPI is MSB FIRST
+	  SPI1_WriteByte((uint8_t)(sampledValue));
 //	  HAL_UART_Transmit(&huart2, &sampledValue, 1, HAL_MAX_DELAY);
     /* USER CODE END WHILE */
 
@@ -198,7 +199,7 @@ static void MX_ADC1_Init(void)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc1.Init.Resolution = ADC_RESOLUTION_10B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
