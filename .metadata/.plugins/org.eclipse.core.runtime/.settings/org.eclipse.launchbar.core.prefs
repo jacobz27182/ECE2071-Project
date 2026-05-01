@@ -1,8 +1,7 @@
 LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/arch=x86_64
 LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/name=Local
 LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/os=win32
-configDescList=org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Debug Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:STM2 Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:STM1 Debug
+configDescList=org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:2071 Milestone Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Debug Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:STM1 Debug,org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:STM2 Debug
 eclipse.preferences.version=1
-org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Debug\ Debug/activeLaunchMode=run
-org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:Debug\ Debug/activeLaunchTarget=null\:---
-org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:STM2\ Debug/activeLaunchMode=run
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:2071\ Milestone\ Debug/activeLaunchMode=run
+org.eclipse.cdt.dsf.gdb.gdbRemotedescriptorType\:2071\ Milestone\ Debug/activeLaunchTarget=null\:---
