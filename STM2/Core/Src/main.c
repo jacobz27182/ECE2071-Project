@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdlib.h"
 #include "stdbool.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,18 +109,24 @@ int main(void)
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
   uint16_t sum;
 
-  uint8_t flag;
-
+  uint8_t flag; //control message received from pc
+  double divider = 2 * pow(10, 4) / 343;
+  double dist_cm = INFINITY;
+  int echo_time = 0;
   int index = 0;
 
   //logical flags
   bool manual = true;
   bool process = false;
   bool downsample_toggle = true;
+  bool idle = true;
+  bool triggered = false;
+  bool echoed = false;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_TIM_Base_Start(&htim16);
   HAL_SPI_Receive(&hspi1, raw, 2, HAL_MAX_DELAY);
   raw16 = ((uint16_t)raw[0] << 8) | raw[1];
   sample10 = raw16 & 0x03FF; // using the mask to extract the 10 bit sample since 0x03FF = 1111111111 in binary
@@ -138,6 +145,7 @@ int main(void)
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
 			if (flag == (uint8_t)'m'){
 				manual = true;
+				idle = true; //reset ultrasonic
 			} else if (flag == (uint8_t)'d'){
 				manual = false;
 			}
@@ -146,7 +154,36 @@ int main(void)
 		if (manual){
 			process = true;
 		} else {
-			//distance trigger logic
+			if (idle){//begin function
+				if (__HAL_TIM_GET_COUNTER(&htim16)>50){
+					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1);
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					idle = false;
+					triggered = true;
+				}
+			}
+			if (triggered){
+				if (__HAL_TIM_GET_COUNTER(&htim16)>10){
+					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,0);
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					echoed = true;
+					triggered = false;
+				}
+			}
+			if (echoed){
+				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
+					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
+				} else {
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+					dist_cm = echo_time/divider;
+
+					echoed = false;
+					idle = true;
+				}
+			}
+
 		}
 
 	  //processing logic
