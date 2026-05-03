@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdlib.h"
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,51 +100,60 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-  uint16_t raw; // raw data via SPI
+  uint8_t raw[2]; // raw data via SPI
+  uint16_t raw16;
   uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
+  uint16_t sum;
 
-  uint8_t msg = 1;
   uint8_t flag;
 
+  int index = 0;
+
   //logical flags
-  int manual = 1;
-  int process = 0;
+  bool manual = true;
+  bool process = false;
+  bool downsample_toggle = true;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_SPI_Receive(&hspi1, &raw, 1, HAL_MAX_DELAY);
-  sample10 = raw & 0x03FF; // using the mask to extract the 10 bit sample since 0x03FF = 1111111111 in binary
+  HAL_SPI_Receive(&hspi1, raw, 2, HAL_MAX_DELAY);
+  raw16 = ((uint16_t)raw[0] << 8) | raw[1];
+  sample10 = raw16 & 0x03FF; // using the mask to extract the 10 bit sample since 0x03FF = 1111111111 in binary
 
   // fill the buffer with the first N samples
-  for(i = 0; i < N; i++) {
+  sum = 0;
+  for(int i = 0; i < N; i++) {
       buffer[i] = sample10;
-      sum= sum + sample10;
+      sum = sum + sample10;
       //initialise the buffer to provide the initial sum for the mean calculation, so we fill the buffer with the first N samples with the sample10 value
   }
   while (1)
   {
 	  //state logic
+	  downsample_toggle = !downsample_toggle;
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
 			if (flag == (uint8_t)'m'){
-				manual = 1;
+				manual = true;
 			} else if (flag == (uint8_t)'d'){
-				manual = 0;
+				manual = false;
 			}
 		}
 
 		if (manual){
-			process = 1;
+			process = true;
 		} else {
 			//distance trigger logic
 		}
 
 	  //processing logic
 		if (process){
-			HAL_SPI_Receive(&hspi1, &raw, 2, HAL_MAX_DELAY);
-			sample10 = raw & 0x03FF;
+			HAL_SPI_Receive(&hspi1, raw, 2, HAL_MAX_DELAY);
+			raw16 = ((uint16_t)raw[0] << 8) | raw[1];
+			sample10 = raw16 & 0x03FF;
 			mean = sum / N;
 
 			  // this is outlier rejection, i know i dont have to do it but i will leave it here for now
@@ -155,13 +165,12 @@ int main(void)
 			 }
 
 			 // update the buffer and the sum
-			 sum-= buffer[index];
+			 sum -= buffer[index];
 			 buffer[index] = new_sample;
-			 sum+= new_sample;
+			 sum += new_sample;
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
 			 // fake downsampling by toggling the downsample_toggle
-			 downsample_toggle ^= 1;
 			 if(downsample_toggle){
 				uint8_t sample8 = mean >> 2;
 				//shift the mean by 2 bits so that from 10 bit to 8 bit

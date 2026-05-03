@@ -2,3 +2,5 @@
 /.metadata
 /.metadata
 /.metadata/.plugins
+/.metadata/.plugins/org.eclipse.core.resources
+.metadata/.log
