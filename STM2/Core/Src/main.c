@@ -103,13 +103,19 @@ int main(void)
   uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
-  HAL_SPI_Receive(&hspi1, &raw, 1, HAL_MAX_DELAY);
-  sample10 = raw & 0x03FF; // using the mask to extract the 10 bit sample since 0x03FF = 1111111111 in binary
 
+  uint8_t msg = 1;
+  uint8_t flag;
+
+  //logical flags
+  int manual = 1;
+  int process = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_SPI_Receive(&hspi1, &raw, 1, HAL_MAX_DELAY);
+  sample10 = raw & 0x03FF; // using the mask to extract the 10 bit sample since 0x03FF = 1111111111 in binary
 
   // fill the buffer with the first N samples
   for(i = 0; i < N; i++) {
@@ -119,30 +125,50 @@ int main(void)
   }
   while (1)
   {
-	  HAL_SPI_Receive(&hspi1, &raw, 2, HAL_MAX_DELAY);
-		  sample10 = raw & 0x03FF;
-		  mean = sum / N;
-	      // this is outlier rejection, i know i dont have to do it but i will leave it here for now
-	     if (abs(sample10 - mean) < THRESHOLD) {
-	        new_sample = sample10;
-	     }
-	     else{
-	        new_sample = mean;
-	     }
-	     // update the buffer and the sum
-	     sum-= buffer[index];
-	     buffer[index] = new_sample;
-	     sum+= new_sample;
-	     index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
-	     // fake downsampling by toggling the downsample_toggle
-	     downsample_toggle ^= 1;
-	     if(downsample_toggle){
-	        uint8_t sample8 = mean >> 2;
-	        //shift the mean by 2 bits so that from 10 bit to 8 bit
-	        //blocking call until this sample is transmitted
-	        HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
-	     }
+	  //state logic
+		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
+			if (flag == (uint8_t)'m'){
+				manual = 1;
+			} else if (flag == (uint8_t)'d'){
+				manual = 0;
+			}
+		}
 
+		if (manual){
+			process = 1;
+		} else {
+			//distance trigger logic
+		}
+
+	  //processing logic
+		if (process){
+			HAL_SPI_Receive(&hspi1, &raw, 2, HAL_MAX_DELAY);
+			sample10 = raw & 0x03FF;
+			mean = sum / N;
+
+			  // this is outlier rejection, i know i dont have to do it but i will leave it here for now
+			 if (abs(sample10 - mean) < THRESHOLD) {
+				new_sample = sample10;
+			 }
+			 else{
+				new_sample = mean;
+			 }
+
+			 // update the buffer and the sum
+			 sum-= buffer[index];
+			 buffer[index] = new_sample;
+			 sum+= new_sample;
+			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
+
+			 // fake downsampling by toggling the downsample_toggle
+			 downsample_toggle ^= 1;
+			 if(downsample_toggle){
+				uint8_t sample8 = mean >> 2;
+				//shift the mean by 2 bits so that from 10 bit to 8 bit
+				//blocking call until this sample is transmitted
+				HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
+			 }
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
