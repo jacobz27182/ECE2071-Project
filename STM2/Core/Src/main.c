@@ -110,6 +110,8 @@ int main(void)
 
   uint8_t flag; //control message received from pc
   double divider = 2 * pow(10, 4) / 343;
+  float short_time = 10*divider;
+  float long_time = 12*divider;
   int echo_time = 0;
   int index = 0;
 
@@ -173,7 +175,7 @@ int main(void)
 					triggered = false;
 				}
 			} else if (echoed){
-//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
 					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
 
@@ -182,15 +184,15 @@ int main(void)
 					echoed = false;
 					waiting = true;
 				}
-//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			}
 			//distance threshold
 			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
-			if (echo_time <= 10*divider){
+			if (echo_time <= short_time){
 				process = true;
 								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 
-			} else if (echo_time > 12*divider){
+			} else if (echo_time > long_time){
 				process = false;
 								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
 			}
@@ -433,17 +435,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Debug_GPIO_Port, Debug_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Debug_Pin|Debug2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD3_Pin|Trigger_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : Debug_Pin */
-  GPIO_InitStruct.Pin = Debug_Pin;
+  /*Configure GPIO pins : Debug_Pin Debug2_Pin */
+  GPIO_InitStruct.Pin = Debug_Pin|Debug2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Debug_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD3_Pin Trigger_Pin */
   GPIO_InitStruct.Pin = LD3_Pin|Trigger_Pin;

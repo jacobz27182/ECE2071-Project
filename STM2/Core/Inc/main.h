@@ -74,6 +74,8 @@ void Error_Handler(void);
 #define VCP_TX_GPIO_Port GPIOA
 #define Debug_Pin GPIO_PIN_8
 #define Debug_GPIO_Port GPIOA
+#define Debug2_Pin GPIO_PIN_12
+#define Debug2_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
