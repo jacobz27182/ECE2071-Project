@@ -58,7 +58,7 @@ static void MX_SPI1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
-static void SPI1_WriteByte(uint8_t tx_byte);
+static void SPI1_Write2Bytes(uint16_t tx_bytes);
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc);
 /* USER CODE END PFP */
 
@@ -421,7 +421,7 @@ static void SPI1_Write2Bytes(uint16_t tx_bytes){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
 	  uint16_t sampledValue = (uint16_t)HAL_ADC_GetValue(&hadc1);
-	  SPI1_WriteBytes(sampledValue);
+	  SPI1_Write2Bytes(sampledValue);
 }
 /* USER CODE END 4 */
 
