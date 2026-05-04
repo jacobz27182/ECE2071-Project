@@ -223,6 +223,7 @@ int main(void)
 				uint8_t sample8 = mean >> 2;
 				//shift the mean by 2 bits so that from 10 bit to 8 bit
 				HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
+				HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
 			 }
 		}
     /* USER CODE END WHILE */
@@ -431,7 +432,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Debug_GPIO_Port, Debug_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD3_Pin|Trigger_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : Debug_Pin */
+  GPIO_InitStruct.Pin = Debug_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Debug_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD3_Pin Trigger_Pin */
   GPIO_InitStruct.Pin = LD3_Pin|Trigger_Pin;
