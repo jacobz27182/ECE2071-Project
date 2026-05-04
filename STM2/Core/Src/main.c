@@ -187,16 +187,18 @@ int main(void)
 //			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			}
 			//distance threshold
-			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
-			if (echo_time <= short_time){
-				process = true;
-								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
+//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
+			if (waiting){
+				if (echo_time <= short_time){
+					process = true;
+									HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 
-			} else if (echo_time > long_time){
-				process = false;
-								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
+				} else if (echo_time > long_time){
+					process = false;
+									HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
+				}
 			}
-			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
+//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
 		}
 		if (process){
 			downsample_toggle = !downsample_toggle;
