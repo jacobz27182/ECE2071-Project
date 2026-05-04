@@ -280,7 +280,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_8BIT;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_10BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
@@ -412,17 +412,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static void SPI1_WriteByte(uint8_t tx_byte){
+static void SPI1_Write2Bytes(uint16_t tx_bytes){
 	while (!LL_SPI_IsActiveFlag_TXE(SPI1)){;}
-	LL_SPI_TransmitData8(SPI1,tx_byte);
+	LL_SPI_TransmitData16(SPI1,tx_bytes);
 	while (LL_SPI_IsActiveFlag_BSY(SPI1)){;}
 	LL_SPI_ClearFlag_OVR(SPI1);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
 	  uint16_t sampledValue = (uint16_t)HAL_ADC_GetValue(&hadc1);
-	  SPI1_WriteByte((uint8_t)(sampledValue>>8)); //SPI is MSB FIRST
-	  SPI1_WriteByte((uint8_t)(sampledValue));
+	  SPI1_WriteBytes(sampledValue);
 }
 /* USER CODE END 4 */
 
