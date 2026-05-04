@@ -24,11 +24,10 @@ def serial_initiate():
         return None
 
 
-def record_audio(ser, duration):
+def record_audio(ser, duration, sampleRate):
     data = []
-    t1 = time.time()
     ser.reset_input_buffer()
-    while time.time() - t1 < duration:
+    for i in range(int(duration*sampleRate)):
         b = ser.read()
         data.append(b[0])
                 
@@ -65,7 +64,7 @@ def save_plot(filename, data, sampleRate):
     plt.savefig(filename)
     print(f"Plot saved to {filename}")
 
-def manual_mode(ser):
+def manual_mode(ser,sampleRate):
     while True:
         try:
             duration = float(input("Enter recording duration in seconds: "))
@@ -77,7 +76,7 @@ def manual_mode(ser):
         except KeyboardInterrupt:
             return
         
-    data = record_audio(ser, duration)
+    data = record_audio(ser, duration, sampleRate)
     if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
         data = (data - data.min()) / (data.max() - data.min()) # scale to 0-1
     else:
@@ -132,7 +131,7 @@ def main():
     if ser is None:
         return
     print("Press Ctrl+C to stop loading data.")
-    sampleRate = 30000
+    sampleRate = 22000
     try:
         while True:
             print("\n===== AUDIO SYSTEM MENU =====")
@@ -148,7 +147,7 @@ def main():
                     print("Manual Recording Mode selected.")
 
                     ser.write("m".encode()) #send this flag to STM2
-                    data = manual_mode(ser)
+                    data = manual_mode(ser,sampleRate)
 
                 case "2":
                     print("Distance Trigger Mode selected.")

@@ -34,7 +34,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define N 4 // number of samples to average
-#define THRESHOLD 20 // threshold for the average value
+#define THRESHOLD 50 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -100,6 +100,8 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+  LL_SPI_Enable(SPI1);
+
   uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
   uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
@@ -125,7 +127,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim16);
   sample10 = SPI1_Read10Bits();
-
+//  HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
   // fill the buffer with the first N samples
   sum = 0;
   for(int i = 0; i < N; i++) {
@@ -136,7 +138,7 @@ int main(void)
   while (1)
   {
 	  //state logic
-	  downsample_toggle = !downsample_toggle;
+//	  HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
 			if (flag == (uint8_t)'m'){
 				manual = true;
@@ -145,6 +147,8 @@ int main(void)
 				manual = false;
 			}
 		}
+//		HAL_UART_Receive(&huart2, &flag, 1, 0);
+//		HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 
 		if (manual){
 			process = true;
@@ -185,6 +189,9 @@ int main(void)
 				process = false;
 			}
 
+		}
+		if (process){
+			downsample_toggle = !downsample_toggle;
 		}
 
 	  //processing logic
@@ -443,6 +450,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static uint16_t SPI1_Read10Bits(void){
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
+    HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
     return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
 }
 /* USER CODE END 4 */
