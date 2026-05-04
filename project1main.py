@@ -87,12 +87,12 @@ def manual_mode(ser,sampleRate):
 
 def distance_trigger_mode(ser):
     print("Distance Trigger Mode (press Ctrl+C to exit)")
-    stopShortTime = 1.0 
+    stopShortTime = 2.0 
 
     ser.reset_input_buffer()
     try:
         data = []
-        ser.timeout = 20
+        ser.timeout = 5
         b = ser.read() #only start timing after the first byte is received
         if len(b) == 0:
             print("Timed out")
@@ -122,6 +122,15 @@ def distance_trigger_mode(ser):
         
     except KeyboardInterrupt:
         print("\rManual Exit Distance Trigger Mode... \n")
+        data = np.array(data) # convert to numpy array because we need to do some processing on it
+
+        if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
+            data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
+            data = data * 255                    # scale to 0-255
+            data = data.astype(np.uint8)         # convert to uint8 type
+        else:
+            data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
+
         ser.timeout = None
         return data
                 
@@ -130,6 +139,7 @@ def main():
     ser = serial_initiate()
     if ser is None:
         return
+    ser.write("i".encode()) #send this flag to STM2
     print("Press Ctrl+C to stop loading data.")
     sampleRate = 22000
     try:
@@ -148,12 +158,14 @@ def main():
 
                     ser.write("m".encode()) #send this flag to STM2
                     data = manual_mode(ser,sampleRate)
+                    ser.write("i".encode()) #send this flag to STM2
 
                 case "2":
                     print("Distance Trigger Mode selected.")
 
                     ser.write("d".encode()) #send this flag to STM2
                     data = distance_trigger_mode(ser)
+                    ser.write("i".encode()) #send this flag to STM2
 
                 case "3":
                     print("Exiting the program.")

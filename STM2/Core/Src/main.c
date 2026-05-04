@@ -119,6 +119,8 @@ int main(void)
   bool process = false;
   bool downsample_toggle = true;
   bool idle = true;
+
+  bool waiting = true;
   bool triggered = false;
   bool echoed = false;
   /* USER CODE END 2 */
@@ -127,7 +129,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim16);
   sample10 = SPI1_Read10Bits();
-//  HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
   // fill the buffer with the first N samples
   sum = 0;
   for(int i = 0; i < N; i++) {
@@ -138,31 +139,33 @@ int main(void)
   while (1)
   {
 	  //state logic
-//	  HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
 			if (flag == (uint8_t)'m'){
+				idle = false;
 				manual = true;
-				idle = true; //reset ultrasonic
 			} else if (flag == (uint8_t)'d'){
+				idle = false;
 				manual = false;
+			} else if (flag == (uint8_t)'i'){
+				idle = true;
 			}
 		}
-//		HAL_UART_Receive(&huart2, &flag, 1, 0);
-//		HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 
+		if (idle){
+			continue;
+		}
 		if (manual){
 			process = true;
 		} else {
-			if (idle){//begin function
+			if (waiting){//begin function
 				if (__HAL_TIM_GET_COUNTER(&htim16)>50){
 					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1);
 					__HAL_TIM_SET_COUNTER(&htim16,0);
 
-					idle = false;
+					waiting = false;
 					triggered = true;
 				}
-			}
-			if (triggered){
+			} else if (triggered){
 				if (__HAL_TIM_GET_COUNTER(&htim16)>10){
 					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,0);
 					__HAL_TIM_SET_COUNTER(&htim16,0);
@@ -170,8 +173,7 @@ int main(void)
 					echoed = true;
 					triggered = false;
 				}
-			}
-			if (echoed){
+			} else if (echoed){
 				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
 					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
 				} else {
@@ -179,14 +181,17 @@ int main(void)
 					dist_cm = echo_time/divider;
 
 					echoed = false;
-					idle = true;
+					waiting = true;
 				}
 			}
 			//distance threshold
 			if (dist_cm <= 10){
 				process = true;
+								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
+
 			} else if (dist_cm > 12){
 				process = false;
+								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
 			}
 
 		}
@@ -199,7 +204,7 @@ int main(void)
 			sample10 = SPI1_Read10Bits();
 			mean = sum / N;
 
-			  // this is outlier rejection, i know i dont have to do it but i will leave it here for now
+			  // this is outlier rejection
 			 if (abs(sample10 - mean) < THRESHOLD) {
 				new_sample = sample10;
 			 }
@@ -217,7 +222,6 @@ int main(void)
 			 if(downsample_toggle){
 				uint8_t sample8 = mean >> 2;
 				//shift the mean by 2 bits so that from 10 bit to 8 bit
-				//blocking call until this sample is transmitted
 				HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
 			 }
 		}
@@ -450,7 +454,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 static uint16_t SPI1_Read10Bits(void){
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
     return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
 }
 /* USER CODE END 4 */
