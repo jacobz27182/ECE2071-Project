@@ -110,7 +110,6 @@ int main(void)
 
   uint8_t flag; //control message received from pc
   double divider = 2 * pow(10, 4) / 343;
-  double dist_cm = INFINITY;
   int echo_time = 0;
   int index = 0;
 
@@ -174,26 +173,28 @@ int main(void)
 					triggered = false;
 				}
 			} else if (echoed){
+//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
 				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
 					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
+
 				} else {
 					__HAL_TIM_SET_COUNTER(&htim16,0);
-					dist_cm = echo_time/divider;
-
 					echoed = false;
 					waiting = true;
 				}
+//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
 			}
 			//distance threshold
-			if (dist_cm <= 10){
+			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
+			if (echo_time <= 10*divider){
 				process = true;
 								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 
-			} else if (dist_cm > 12){
+			} else if (echo_time > 12*divider){
 				process = false;
 								HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
 			}
-
+			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
 		}
 		if (process){
 			downsample_toggle = !downsample_toggle;
@@ -223,7 +224,7 @@ int main(void)
 				uint8_t sample8 = mean >> 2;
 				//shift the mean by 2 bits so that from 10 bit to 8 bit
 				HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
-				HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
+//				HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
 			 }
 		}
     /* USER CODE END WHILE */
