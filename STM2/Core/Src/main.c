@@ -34,7 +34,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define N 4 // number of samples to average
-#define THRESHOLD 50 // threshold for the average value
+#define THRESHOLD 60 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -209,7 +209,7 @@ int main(void)
 				new_sample = sample10;
 			 }
 			 else{
-				new_sample = mean;
+				 new_sample = mean + (sample10 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
 			 }
 
 			 // update the buffer and the sum
