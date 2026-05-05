@@ -230,7 +230,9 @@ int main(void)
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
-			HAL_UART_Transmit(&huart2, &sample8, 1,0);
+//			HAL_UART_Transmit(&huart2, &sample8, 1,0);
+			while (!(huart2.Instance->ISR & USART_ISR_TXE));
+			huart2.Instance->TDR = sample8;
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			 }
 
