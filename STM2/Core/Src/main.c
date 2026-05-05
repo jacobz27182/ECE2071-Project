@@ -47,6 +47,7 @@
 TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -55,6 +56,7 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM16_Init(void);
@@ -96,6 +98,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   MX_TIM16_Init();
@@ -114,6 +117,7 @@ int main(void)
   float long_time = 12*divider;
   int echo_time = 0;
   int index = 0;
+  int s=0;
 
   //logical flags
   bool manual = true;
@@ -158,13 +162,16 @@ int main(void)
 		if (manual){
 			process = true;
 		} else {
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			if (waiting){//begin function
-				if (__HAL_TIM_GET_COUNTER(&htim16)>50){
+				if (__HAL_TIM_GET_COUNTER(&htim16)>50 && s){
 					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1);
 					__HAL_TIM_SET_COUNTER(&htim16,0);
 
 					waiting = false;
 					triggered = true;
+				} else {
+					s ^= 1;
 				}
 			} else if (triggered){
 				if (__HAL_TIM_GET_COUNTER(&htim16)>10){
@@ -181,32 +188,30 @@ int main(void)
 
 				} else {
 					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					if (echo_time <= short_time){
+						process = true;
+//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
+
+					} else if (echo_time > long_time){
+						process = false;
+//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
+					}
+
 					echoed = false;
 					waiting = true;
 				}
-//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			}
 			//distance threshold
-//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,1);
-			if (waiting){
-				if (echo_time <= short_time){
-					process = true;
-									HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
-
-				} else if (echo_time > long_time){
-					process = false;
-									HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
-				}
-			}
-//			HAL_GPIO_WritePin(Debug_GPIO_Port,Debug_Pin,0);
-		}
-		if (process){
-			downsample_toggle = !downsample_toggle;
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 		}
 
 	  //processing logic
 		if (process){
+			downsample_toggle = !downsample_toggle;
+			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
 			sample10 = SPI1_Read10Bits();
+		if(downsample_toggle){
 			mean = sum / N;
 
 			  // this is outlier rejection
@@ -223,13 +228,12 @@ int main(void)
 			 sum += new_sample;
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
-			 // fake downsampling by toggling the downsample_toggle
-			 if(downsample_toggle){
-				uint8_t sample8 = mean >> 2;
-				//shift the mean by 2 bits so that from 10 bit to 8 bit
-				HAL_UART_Transmit(&huart2, &sample8, 1, HAL_MAX_DELAY);
-//				HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
+//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
+			HAL_UART_Transmit(&huart2, &sample8, 1,0);
+//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			 }
+
 		}
     /* USER CODE END WHILE */
 
@@ -416,6 +420,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
 }
 
