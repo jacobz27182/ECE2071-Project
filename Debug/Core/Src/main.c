@@ -91,15 +91,29 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   uint8_t msg = 1;
+  uint8_t flag;
+  int manual = 1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  /* USER CODE BEGIN W	HILE */
   while (1)
   {
+	if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
+		if (flag == (uint8_t)'m'){
+			manual = 1;
+		} else if (flag == (uint8_t)'d'){
+			manual = 0;
+		}
+	}
     /* USER CODE END WHILE */
-	HAL_UART_Transmit(&huart2, &msg, 1, HAL_MAX_DELAY);
-	msg++;
+	if (manual){
+		HAL_UART_Transmit(&huart2, &msg, 1, HAL_MAX_DELAY);
+		msg++;
+	} else{
+		HAL_UART_Transmit(&huart2, &msg, 1, HAL_MAX_DELAY);
+		msg--;
+	}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

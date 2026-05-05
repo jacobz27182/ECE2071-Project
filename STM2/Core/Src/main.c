@@ -21,7 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdlib.h"
+#include "stdbool.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define N 4 // number of samples to average
+#define THRESHOLD 60 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -40,9 +43,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef hspi1;
+
+TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -51,10 +56,12 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
-
+static uint16_t SPI1_Read10Bits(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -91,24 +98,145 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t b1;
-  uint8_t b2;
-  uint8_t b_avg;
+  LL_SPI_Enable(SPI1);
+
+  uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t buffer[N];
+  uint16_t mean; // mean of the sample10 in the last N samples
+  uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
+  uint16_t sum;
+
+  uint8_t flag; //control message received from pc
+  double divider = 2 * pow(10, 4) / 343;
+  float short_time = 10*divider;
+  float long_time = 12*divider;
+  int echo_time = 0;
+  int index = 0;
+  int s=0;
+
+  //logical flags
+  bool manual = true;
+  bool process = false;
+  bool downsample_toggle = true;
+  bool idle = true;
+
+  bool waiting = true;
+  bool triggered = false;
+  bool echoed = false;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_SPI_Receive(&hspi1, &b1, 1, HAL_MAX_DELAY);
+  HAL_TIM_Base_Start(&htim16);
+  sample10 = SPI1_Read10Bits();
+  // fill the buffer with the first N samples
+  sum = 0;
+  for(int i = 0; i < N; i++) {
+      buffer[i] = sample10;
+      sum = sum + sample10;
+      //initialise the buffer to provide the initial sum for the mean calculation, so we fill the buffer with the first N samples with the sample10 value
+  }
   while (1)
   {
-	  HAL_SPI_Receive(&hspi1, &b2, 1, HAL_MAX_DELAY);
-	  b_avg = (b1+b2)/2;
-	  HAL_UART_Transmit(&huart2, &b_avg, 1, HAL_MAX_DELAY);
-	  b1 = b2;
+	  //state logic
+		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
+			if (flag == (uint8_t)'m'){
+				idle = false;
+				manual = true;
+			} else if (flag == (uint8_t)'d'){
+				idle = false;
+				manual = false;
+			} else if (flag == (uint8_t)'i'){
+				idle = true;
+			}
+		}
 
+		if (idle){
+			continue;
+		}
+		if (manual){
+			process = true;
+		} else {
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+			if (waiting){//begin function
+				if (__HAL_TIM_GET_COUNTER(&htim16)>50 && s){
+					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1);
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					waiting = false;
+					triggered = true;
+				} else {
+					s ^= 1;
+				}
+			} else if (triggered){
+				if (__HAL_TIM_GET_COUNTER(&htim16)>10){
+					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,0);
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					echoed = true;
+					triggered = false;
+				}
+			} else if (echoed){
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
+					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
+
+				} else {
+					__HAL_TIM_SET_COUNTER(&htim16,0);
+
+					if (echo_time <= short_time){
+						process = true;
+//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
+
+					} else if (echo_time > long_time){
+						process = false;
+//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
+					}
+
+					echoed = false;
+					waiting = true;
+				}
+			}
+			//distance threshold
+//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
+		}
+
+	  //processing logic
+		if (process){
+			downsample_toggle = !downsample_toggle;
+			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
+			sample10 = SPI1_Read10Bits();
+		if(downsample_toggle){
+			mean = sum / N;
+
+			  // this is outlier rejection
+			 if (abs(sample10 - mean) < THRESHOLD) {
+				new_sample = sample10;
+			 }
+			 else{
+				 new_sample = mean + (sample10 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
+			 }
+
+			 // update the buffer and the sum
+			 sum -= buffer[index];
+			 buffer[index] = new_sample;
+			 sum += new_sample;
+			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
+
+//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
+//			HAL_UART_Transmit(&huart2, &sample8, 1,0);
+			while (!(huart2.Instance->ISR & USART_ISR_TXE));
+			huart2.Instance->TDR = sample8;
+//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
+			 }
+
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -188,30 +316,77 @@ static void MX_SPI1_Init(void)
 
   /* USER CODE END SPI1_Init 0 */
 
+  LL_SPI_InitTypeDef SPI_InitStruct = {0};
+
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* Peripheral clock enable */
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
+
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
+  /**SPI1 GPIO Configuration
+  PA1   ------> SPI1_SCK
+  PA7   ------> SPI1_MOSI
+  */
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_1|LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /* USER CODE BEGIN SPI1_Init 1 */
 
   /* USER CODE END SPI1_Init 1 */
   /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_SLAVE;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 7;
-  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
+  SPI_InitStruct.Mode = LL_SPI_MODE_SLAVE;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_10BIT;
+  SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
+  SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
+  SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
+  SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
+  SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
+  SPI_InitStruct.CRCPoly = 7;
+  LL_SPI_Init(SPI1, &SPI_InitStruct);
+  LL_SPI_SetStandard(SPI1, LL_SPI_PROTOCOL_MOTOROLA);
+  LL_SPI_DisableNSSPulseMgt(SPI1);
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM16 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM16_Init(void)
+{
+
+  /* USER CODE BEGIN TIM16_Init 0 */
+
+  /* USER CODE END TIM16_Init 0 */
+
+  /* USER CODE BEGIN TIM16_Init 1 */
+
+  /* USER CODE END TIM16_Init 1 */
+  htim16.Instance = TIM16;
+  htim16.Init.Prescaler = 31;
+  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim16.Init.Period = 65535;
+  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim16.Init.RepetitionCounter = 0;
+  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM16_Init 2 */
+
+  /* USER CODE END TIM16_Init 2 */
 
 }
 
@@ -231,7 +406,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 921600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -247,6 +422,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 
 }
 
@@ -268,14 +459,30 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Debug_Pin|Debug2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LD3_Pin */
-  GPIO_InitStruct.Pin = LD3_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LD3_Pin|Trigger_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : Debug_Pin Debug2_Pin */
+  GPIO_InitStruct.Pin = Debug_Pin|Debug2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LD3_Pin Trigger_Pin */
+  GPIO_InitStruct.Pin = LD3_Pin|Trigger_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Echo_Pin */
+  GPIO_InitStruct.Pin = Echo_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Echo_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -283,7 +490,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+static uint16_t SPI1_Read10Bits(void){
+    while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
+    return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
+}
 /* USER CODE END 4 */
 
 /**
