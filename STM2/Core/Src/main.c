@@ -120,14 +120,14 @@ int main(void)
   int s=0;
 
   //logical flags
-  bool manual = true;
-  bool process = false;
+  bool manual = true; // True for Manual Mode, False for Distance Mode
+  bool process = false; //do we choose to process data?
   bool downsample_toggle = true;
-  bool idle = true;
+  bool idle = true; //Is the stm doing nothing (waiting for pc instruction)?
 
-  bool waiting = true;
-  bool triggered = false;
-  bool echoed = false;
+  bool waiting = true; //is the Ultrasonic Sensor in the cooloff period between readings?
+  bool triggered = false; //Is the trigger pin high?
+  bool echoed = false; //Is the echo pin high?
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -143,7 +143,8 @@ int main(void)
   }
   while (1)
   {
-	  //state logic
+//		state logic
+	  //check for instruction from pc
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
 			if (flag == (uint8_t)'m'){
 				idle = false;
@@ -157,59 +158,56 @@ int main(void)
 		}
 
 		if (idle){
-			continue;
+			continue; //do nothing when in idle mode
 		}
 		if (manual){
-			process = true;
+			process = true; //we always process if were in manual mode
 		} else {
 //			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			if (waiting){//begin function
-				if (__HAL_TIM_GET_COUNTER(&htim16)>50 && s){
-					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1);
+
+			//ultrasonic state logic
+			if (waiting){
+				if (__HAL_TIM_GET_COUNTER(&htim16)>50){ //wait 50ms
+					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,1); //activate trigger pin
 					__HAL_TIM_SET_COUNTER(&htim16,0);
 
 					waiting = false;
-					triggered = true;
-				} else {
-					s ^= 1;
+					triggered = true; //move to next state
 				}
 			} else if (triggered){
-				if (__HAL_TIM_GET_COUNTER(&htim16)>10){
+				if (__HAL_TIM_GET_COUNTER(&htim16)>10){ //wait 10ms
 					HAL_GPIO_WritePin(Trigger_GPIO_Port,Trigger_Pin,0);
 					__HAL_TIM_SET_COUNTER(&htim16,0);
 
-					echoed = true;
+					echoed = true; //move to next state
 					triggered = false;
 				}
 			} else if (echoed){
-//			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+				//check how long echo is on for
 				if (HAL_GPIO_ReadPin(Echo_GPIO_Port,Echo_Pin)==GPIO_PIN_SET){
 					echo_time = __HAL_TIM_GET_COUNTER(&htim16);
 
 				} else {
 					__HAL_TIM_SET_COUNTER(&htim16,0);
 
+					//only process if the distance detected is small enough
 					if (echo_time <= short_time){
 						process = true;
-//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
-
 					} else if (echo_time > long_time){
 						process = false;
-//										HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,0);
 					}
 
 					echoed = false;
 					waiting = true;
 				}
 			}
-			//distance threshold
 //			HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 		}
 
 	  //processing logic
 		if (process){
 			downsample_toggle = !downsample_toggle;
-			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
+//			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
 			sample10 = SPI1_Read10Bits();
 		if(downsample_toggle){
 			mean = sum / N;
@@ -230,7 +228,6 @@ int main(void)
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
-//			HAL_UART_Transmit(&huart2, &sample8, 1,0);
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
