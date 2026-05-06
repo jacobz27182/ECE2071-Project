@@ -245,7 +245,7 @@ int main(void)
 			 WRITEBIT(message,4,(new_sample>>4)&1);
 			 WRITEBIT(message,5,(new_sample>>5)&1);
 			 WRITEBIT(message,6,(new_sample>>6)&1);
-			 WRITEBIT(message,7,1);
+			 WRITEBIT(message,7,0);
 
 			 WRITEBIT(message,8,(new_sample>>7)&1);
 			 WRITEBIT(message,9,(new_sample>>8)&1);
@@ -254,7 +254,7 @@ int main(void)
 			 WRITEBIT(message,12,(new_sample>>11)&1);
 			 WRITEBIT(message,13,C0);
 			 WRITEBIT(message,14,C1);
-			 WRITEBIT(message,15,0);
+			 WRITEBIT(message,15,1);
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));

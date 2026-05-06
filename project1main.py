@@ -23,15 +23,45 @@ def serial_initiate():
         print("Stopped by user")
         return None
 
+def decode(raw_data):
+    data = []
+    i = 0
+    while i <= len(raw_data)-2:
+        byte0 = raw_data[i]
+        byte1 = raw_data[i+1]
+
+        #check ordering
+        if not (((byte0&0x80)==0 and ((byte1&0x80)==1))):
+            i += 1
+            continue
+
+        #checksums
+        C0 = (byte1>>5)&1
+        C1 = (byte1>>6)&1
+        value = np.uint16(byte0|((byte1&0x1F)<<7))
+
+        if C0!=(((value>>0) & 1)^((value>>2) & 1)^((value>>4) & 1)^((value>>6) & 1)^((value>>8) & 1)^((value>>10) & 1)):
+            i+=1
+            continue
+
+        if C1!=(((value>>1) & 1)^((value>>3) & 1)^((value>>5) & 1)^((value>>7) & 1)^((value>>9) & 1)^((value>>11) & 1)):
+            i+=1
+            continue
+
+        data.append(value)
+        i += 2
+
+    return np.array(data)
 
 def record_audio(ser, duration, sampleRate):
-    data = []
+    raw_data = []
     ser.reset_input_buffer()
     for i in range(int(duration*sampleRate)):
-        b = ser.read()
-        data.append(b[0])
+        b = ser.read(2)
+        raw_data.append(b[0])
+        raw_data.append(b[1])
                 
-    return np.array(data)
+    return raw_data
 
 def save_wave(filename, data, sampleRate):
     with wave.open(filename, 'wb') as wf: 
@@ -76,13 +106,14 @@ def manual_mode(ser,sampleRate):
         except KeyboardInterrupt:
             return
         
-    data = record_audio(ser, duration, sampleRate)
+    raw_data = record_audio(ser, duration, sampleRate)
+    data = decode(raw_data)
     if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
         data = (data - data.min()) / (data.max() - data.min()) # scale to 0-1
     else:
         data = np.zeros_like(data) # if there is no variation, just create an array of zeros
-    data = data * 255                    # scale to 0-255
-    data = data.astype(np.uint8)         # convert to uint8 type
+    data = data * (2**12-1)                   
+    data = data.astype(np.uint16)         
     return data
 
 def distance_trigger_mode(ser):
