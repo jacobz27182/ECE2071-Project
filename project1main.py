@@ -24,6 +24,7 @@ def serial_initiate():
         return None
 
 def decode(raw_data):
+    print("Beginning Processing of Audio")
     data = []
     i = 0
     while i <= len(raw_data)-2:
