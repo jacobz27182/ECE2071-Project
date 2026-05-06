@@ -1,0 +1,7 @@
+16 bit message:
+
+upper byte = {0, C1, C0, data[11:7]}
+lower byte = {1,data[6:0]}
+
+C0 = d0^d2^d4^d6^d8^d10
+C1 = d1^d3^d5^d7^d9^d11

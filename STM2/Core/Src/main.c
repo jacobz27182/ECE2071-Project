@@ -35,6 +35,8 @@
 /* USER CODE BEGIN PD */
 #define N 4 // number of samples to average
 #define THRESHOLD 60 // threshold for the average value
+#define WRITEBIT(target,position,value)\
+	(target) = ((target) & ~(0x1u<<(position))) | ((value)<<(position));
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -105,11 +107,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   LL_SPI_Enable(SPI1);
 
-  uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t sample12;// 10 bit sample filtered by the moving window from the raw data
   uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
   uint16_t sum;
+  uint16_t message;
 
   uint8_t flag; //control message received from pc
   double divider = 2 * pow(10, 4) / 343;
@@ -117,7 +120,6 @@ int main(void)
   float long_time = 12*divider;
   int echo_time = 0;
   int index = 0;
-  int s=0;
 
   //logical flags
   bool manual = true; // True for Manual Mode, False for Distance Mode
@@ -208,16 +210,18 @@ int main(void)
 		if (process){
 			downsample_toggle = !downsample_toggle;
 //			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
-			sample10 = SPI1_Read10Bits();
+			sample12 = SPI1_Read10Bits();
+		}
+
 		if(downsample_toggle){
 			mean = sum / N;
 
 			  // this is outlier rejection
-			 if (abs(sample10 - mean) < THRESHOLD) {
-				new_sample = sample10;
+			 if (abs(sample12 - mean) < THRESHOLD) {
+				new_sample = sample12;
 			 }
 			 else{
-				 new_sample = mean + (sample10 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
+				 new_sample = mean + (sample12 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
 			 }
 
 			 // update the buffer and the sum
@@ -225,6 +229,30 @@ int main(void)
 			 buffer[index] = new_sample;
 			 sum += new_sample;
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
+
+			 // encode.
+			 C0 = ((new_sample>>0) & 1)^((new_sample>>2) & 1)^((new_sample>>4) & 1)^((new_sample>>6) & 1)
+					 ^((new_sample>>8) & 1)^((new_sample>>10) & 1);
+			 C1 = ((new_sample>>1) & 1)^((new_sample>>3) & 1)^((new_sample>>5) & 1)^((new_sample>>7) & 1)
+					 ^((new_sample>>9) & 1)^((new_sample>>11) & 1);
+
+			 WRITEBIT(message,0,(new_sample>>0)&1);
+			 WRITEBIT(message,1,(new_sample>>1)&1);
+			 WRITEBIT(message,2,(new_sample>>2)&1);
+			 WRITEBIT(message,3,(new_sample>>3)&1);
+			 WRITEBIT(message,4,(new_sample>>4)&1);
+			 WRITEBIT(message,5,(new_sample>>5)&1);
+			 WRITEBIT(message,6,(new_sample>>6)&1);
+			 WRITEBIT(message,7,1);
+
+			 WRITEBIT(message,8,(new_sample>>7)&1);
+			 WRITEBIT(message,9,(new_sample>>8)&1);
+			 WRITEBIT(message,10,(new_sample>>9)&1);
+			 WRITEBIT(message,11,(new_sample>>10)&1);
+			 WRITEBIT(message,12,(new_sample>>11)&1);
+			 WRITEBIT(message,13,C0);
+			 WRITEBIT(message,14,C1);
+			 WRITEBIT(message,15,0);
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
