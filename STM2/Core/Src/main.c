@@ -63,7 +63,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
-static uint16_t SPI1_Read10Bits(void);
+static uint16_t SPI1_Read12Bits(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -130,17 +130,19 @@ int main(void)
   bool waiting = true; //is the Ultrasonic Sensor in the cooloff period between readings?
   bool triggered = false; //Is the trigger pin high?
   bool echoed = false; //Is the echo pin high?
+
+  int C0, C1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim16);
-  sample10 = SPI1_Read10Bits();
+  sample12 = SPI1_Read12Bits();
   // fill the buffer with the first N samples
   sum = 0;
   for(int i = 0; i < N; i++) {
-      buffer[i] = sample10;
-      sum = sum + sample10;
+      buffer[i] = sample12;
+      sum = sum + sample12;
       //initialise the buffer to provide the initial sum for the mean calculation, so we fill the buffer with the first N samples with the sample10 value
   }
   while (1)
@@ -210,7 +212,7 @@ int main(void)
 		if (process){
 			downsample_toggle = !downsample_toggle;
 //			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
-			sample12 = SPI1_Read10Bits();
+			sample12 = SPI1_Read12Bits();
 		}
 
 		if(downsample_toggle){
@@ -255,13 +257,13 @@ int main(void)
 			 WRITEBIT(message,15,0);
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
-			huart2.Instance->TDR = sample8;
+			huart2.Instance->TDR = (uint8_t)message;
+			while (!(huart2.Instance->ISR & USART_ISR_TXE));
+			huart2.Instance->TDR = (uint8_t)(message>>8);
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
-			 }
 
-		}
+			}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -515,9 +517,9 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static uint16_t SPI1_Read10Bits(void){
+static uint16_t SPI1_Read12Bits(void){
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
+    return LL_SPI_ReceiveData16(SPI1) & 0x0FFF;
 }
 /* USER CODE END 4 */
 
