@@ -37,7 +37,7 @@ def save_wave(filename, data, sampleRate):
     with wave.open(filename, 'wb') as wf: 
         wf.setnchannels(1)              
         # mono audio (single channel) 
-        wf.setsampwidth(1)              
+        wf.setsampwidth(2)              
         # 8 bits (1 byte ) per sample 
         wf.setframerate(sampleRate)    
         # set the sample rate that the data was recorded at 
@@ -80,9 +80,9 @@ def manual_mode(ser,sampleRate):
     if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
         data = (data - data.min()) / (data.max() - data.min()) # scale to 0-1
     else:
-        data = np.zeros_like(data) # if there is no variation, just create an array of zeros
-    data = data * 255                    # scale to 0-255
-    data = data.astype(np.uint8)         # convert to uint8 type
+        data = np.zeros_like(data,dtype=np.uint16) # if there is no variation, just create an array of zeros
+    data = data * (2**16-1)
+    data = data.astype(np.uint16)         # convert to uint16 type
     return data
 
 def distance_trigger_mode(ser):
@@ -111,10 +111,10 @@ def distance_trigger_mode(ser):
 
         if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
             data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
-            data = data * 255                    # scale to 0-255
-            data = data.astype(np.uint8)         # convert to uint8 type
+            data = data * (2**16-1)                    
+            data = data.astype(np.uint16)         # convert to uint16 type
         else:
-            data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
+            data = np.zeros_like(data, dtype=np.uint16) # if there is no variation, just create an array of zeros
 
         ser.timeout = None
         return data
@@ -126,10 +126,10 @@ def distance_trigger_mode(ser):
 
         if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
             data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
-            data = data * 255                    # scale to 0-255
-            data = data.astype(np.uint8)         # convert to uint8 type
+            data = data * (2*16-1)                   
+            data = data.astype(np.uint16)         # convert to uint16 type
         else:
-            data = np.zeros_like(data, dtype=np.uint8) # if there is no variation, just create an array of zeros
+            data = np.zeros_like(data, dtype=np.uint16) # if there is no variation, just create an array of zeros
 
         ser.timeout = None
         return data
