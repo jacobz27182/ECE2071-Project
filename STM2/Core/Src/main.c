@@ -225,11 +225,14 @@ int main(void)
 			 sum += new_sample;
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
-//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
 			uint8_t sample8 = mean >> 4; //shift the mean by 2 bits so that from 10 bit to 8 bit
+			uint8_t sample8pt2 = mean >> 8;
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
-//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
+			while (!(huart2.Instance->ISR & USART_ISR_TXE));
+			huart2.Instance->TDR = sample8pt2;
+				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			 }
 
 		}

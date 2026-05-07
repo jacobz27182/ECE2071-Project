@@ -28,8 +28,8 @@ def record_audio(ser, duration, sampleRate):
     data = []
     ser.reset_input_buffer()
     for i in range(int(duration*sampleRate)):
-        b = ser.read()
-        data.append(b[0])
+        b = ser.read(2)
+        data.append((b[1]<<8)|b[0])
                 
     return np.array(data)
 
@@ -93,18 +93,18 @@ def distance_trigger_mode(ser):
     try:
         data = []
         ser.timeout = 5
-        b = ser.read() #only start timing after the first byte is received
+        b = ser.read(2) #only start timing after the first byte is received
         if len(b) == 0:
             print("Timed out")
             return
         
         print("Recording Begun")
-        data.append(b[0]) 
+        data.append((b[1]<<8)|b[0]) 
         ser.timeout = stopShortTime
         while True: 
-            b = ser.read()
-            if len(b)==0: break #timed out
-            data.append(b[0])
+            b = ser.read(2)
+            if len(b)<2: break #timed out
+            data.append((b[1]<<8)|b[0])
 
         print("Recording Finished")
         data = np.array(data) # convert to numpy array because we need to do some processing on it
