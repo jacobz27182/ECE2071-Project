@@ -29,6 +29,10 @@ def record_audio(ser, duration, sampleRate):
     ser.reset_input_buffer()
     for i in range(int(duration*sampleRate)):
         b = ser.read(2)
+        if b[1] & 0xF0:  # high nibble should always be 0 for 12-bit data
+        # we're out of sync, discard and re-read
+            ser.read(1)  # skip one byte to try to realign
+            continue
         data.append((b[1]<<8)|b[0])
                 
     return np.array(data)
