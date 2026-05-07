@@ -421,10 +421,10 @@ static void SPI1_Write2Bytes(uint16_t tx_bytes){
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
 	  uint16_t sampledValue = (uint16_t)HAL_ADC_GetValue(&hadc1);
-	  char buffer[100];
-	  sprintf(buffer,"%d\r\n",sampledValue);
-	  HAL_UART_Transmit(&huart2,buffer,8,HAL_MAX_DELAY);
-//	  SPI1_Write2Bytes(sampledValue);
+//	  char buffer[100];
+//	  sprintf(buffer,"%d\r\n",sampledValue);
+//	  HAL_UART_Transmit(&huart2,buffer,8,HAL_MAX_DELAY);
+	  SPI1_Write2Bytes(sampledValue);
 }
 /* USER CODE END 4 */
 
