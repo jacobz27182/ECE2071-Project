@@ -29,6 +29,10 @@ def record_audio(ser, duration, sampleRate):
     ser.reset_input_buffer()
     for i in range(int(duration*sampleRate)):
         b = ser.read(2)
+        if b[1] & 0xF0:  # high nibble should always be 0 for 12-bit data
+            # we're out of sync, discard and re-read
+            ser.read(1)  # skip one byte to try to realign
+            continue
         data.append((b[1]<<8)|b[0])
                 
     return np.array(data)
@@ -38,7 +42,7 @@ def save_wave(filename, data, sampleRate):
         wf.setnchannels(1)              
         # mono audio (single channel) 
         wf.setsampwidth(2)              
-        # 8 bits (1 byte ) per sample 
+        # 16 bits (2 bytes ) per sample 
         wf.setframerate(sampleRate)    
         # set the sample rate that the data was recorded at 
         wf.writeframes(data.tobytes())  # write the audio data to the file
@@ -77,11 +81,13 @@ def manual_mode(ser,sampleRate):
             return
         
     data = record_audio(ser, duration, sampleRate)
-    if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
-        data = (data - data.min()) / (data.max() - data.min()) # scale to 0-1
-    else:
-        data = np.zeros_like(data,dtype=np.uint16) # if there is no variation, just create an array of zeros
-    data = data * (2**16-1)
+
+    data = data.astype(np.int32)  # avoid overflow
+    data = data - np.mean(data) #center data
+    # drange = np.max(np.abs(data))
+    # data = data*(2**15)/drange+2**15 
+    data += 2**15
+    data = np.clip(data, 0, 2**16 - 1)  # shouldnt need to but i cbs to check my maths
     data = data.astype(np.uint16)         # convert to uint16 type
     return data
 

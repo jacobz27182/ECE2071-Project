@@ -33,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define N 4 // number of samples to average
+#define N 8 // number of samples to average
 #define THRESHOLD 60 // threshold for the average value
 /* USER CODE END PD */
 
@@ -226,7 +226,7 @@ int main(void)
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
 				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			uint8_t sample8 = mean >> 4; //shift the mean by 2 bits so that from 10 bit to 8 bit
+			uint8_t sample8 = mean;
 			uint8_t sample8pt2 = mean >> 8;
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
@@ -341,7 +341,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
   SPI_InitStruct.Mode = LL_SPI_MODE_SLAVE;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_10BIT;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_12BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
