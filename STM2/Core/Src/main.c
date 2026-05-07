@@ -354,7 +354,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
   SPI_InitStruct.Mode = LL_SPI_MODE_SLAVE;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_10BIT;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_12BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
