@@ -61,7 +61,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
-static uint16_t SPI1_Read10Bits(void);
+static uint16_t SPI1_Read12Bits(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,7 +105,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   LL_SPI_Enable(SPI1);
 
-  uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t sample12;// 10 bit sample filtered by the moving window from the raw data
   uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
@@ -117,7 +117,6 @@ int main(void)
   float long_time = 12*divider;
   int echo_time = 0;
   int index = 0;
-  int s=0;
 
   //logical flags
   bool manual = true; // True for Manual Mode, False for Distance Mode
@@ -133,12 +132,12 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim16);
-  sample10 = SPI1_Read10Bits();
+  sample12 = SPI1_Read12Bits();
   // fill the buffer with the first N samples
   sum = 0;
   for(int i = 0; i < N; i++) {
-      buffer[i] = sample10;
-      sum = sum + sample10;
+      buffer[i] = sample12;
+      sum = sum + sample12;
       //initialise the buffer to provide the initial sum for the mean calculation, so we fill the buffer with the first N samples with the sample10 value
   }
   while (1)
@@ -208,16 +207,16 @@ int main(void)
 		if (process){
 			downsample_toggle = !downsample_toggle;
 //			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
-			sample10 = SPI1_Read10Bits();
+			sample12 = SPI1_Read12Bits();
 		if(downsample_toggle){
 			mean = sum / N;
 
 			  // this is outlier rejection
-			 if (abs(sample10 - mean) < THRESHOLD) {
-				new_sample = sample10;
+			 if (abs(sample12 - mean) < THRESHOLD) {
+				new_sample = sample12;
 			 }
 			 else{
-				 new_sample = mean + (sample10 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
+				 new_sample = mean + (sample12 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
 			 }
 
 			 // update the buffer and the sum
@@ -227,7 +226,7 @@ int main(void)
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
+			uint8_t sample8 = mean >> 4; //shift the mean by 2 bits so that from 10 bit to 8 bit
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
 //				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
@@ -487,9 +486,9 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static uint16_t SPI1_Read10Bits(void){
+static uint16_t SPI1_Read12Bits(void){
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
+    return LL_SPI_ReceiveData16(SPI1) & 0x0FFF;
 }
 /* USER CODE END 4 */
 
