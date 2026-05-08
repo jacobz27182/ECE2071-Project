@@ -145,7 +145,7 @@ def main():
         return
     ser.write("i".encode()) #send this flag to STM2
     print("Press Ctrl+C to stop loading data.")
-    sampleRate = 22000
+    sampleRate = 44100
     try:
         while True:
             print("\n===== AUDIO SYSTEM MENU =====")

@@ -35,8 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define N 4 // number of samples to average
-#define THRESHOLD 240 // threshold for the average value
+#define N 1 // number of samples to average
+#define THRESHOLD 99999 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -216,7 +216,7 @@ int main(void)
 			downsample_toggle = !downsample_toggle;
 //			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
 			sample12 = SPI1_Read12Bits();
-		if(downsample_toggle){
+		if(1){
 			mean = sum / N;
 
 			  // this is outlier rejection
