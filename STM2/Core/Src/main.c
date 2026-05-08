@@ -105,6 +105,9 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+  LL_SPI_SetCRCWidth(SPI1,LL_SPI_CRC_16BIT);
+  LL_SPI_SetCRCPolynomial(SPI1,7);
+  LL_SPI_EnableCRC(SPI1);
   LL_SPI_Enable(SPI1);
 
   uint16_t sample12;// 10 bit sample filtered by the moving window from the raw data
@@ -144,11 +147,11 @@ int main(void)
   }
   while (1)
   {
-//	    char debug_msg[100];
-//		sample12 = SPI1_Read12Bits();
+	    char debug_msg[100];
+		sample12 = SPI1_Read12Bits();
 //		sprintf(debug_msg,"%d\r\n",sample12);
 //		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)debug_msg,8);
-//		continue;
+		continue;
 
 //		state logic
 	  //check for instruction from pc
@@ -498,8 +501,23 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 static uint16_t SPI1_Read12Bits(void){
+	static uint16_t last_good_sample = 0;
+//	LL_SPI_Disable(SPI1);
+	LL_SPI_DisableCRC(SPI1);
+	LL_SPI_EnableCRC(SPI1);
+//	LL_SPI_Enable(SPI1);
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    return LL_SPI_ReceiveData16(SPI1) & 0x0FFF;
+	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+    uint16_t msg = LL_SPI_ReceiveData16(SPI1) & 0x0FFF;
+    while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
+    LL_SPI_ReceiveData16(SPI1);
+    if (LL_SPI_IsActiveFlag_CRCERR(SPI1)){
+    	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+    	msg = last_good_sample;
+    } else {
+    	last_good_sample = msg;
+    }
+    return msg;
 }
 /* USER CODE END 4 */
 
