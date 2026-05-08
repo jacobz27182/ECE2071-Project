@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
 #include "stdbool.h"
 #include "math.h"
 /* USER CODE END Includes */
@@ -33,8 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define N 8 // number of samples to average
-#define THRESHOLD 60 // threshold for the average value
+#define N 1 // number of samples to average
+#define THRESHOLD 9999 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -142,6 +144,12 @@ int main(void)
   }
   while (1)
   {
+//	    char debug_msg[100];
+//		sample12 = SPI1_Read12Bits();
+//		sprintf(debug_msg,"%d\r\n",sample12);
+//		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)debug_msg,8);
+//		continue;
+
 //		state logic
 	  //check for instruction from pc
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
@@ -212,7 +220,7 @@ int main(void)
 			mean = sum / N;
 
 			  // this is outlier rejection
-			 if (abs(sample12 - mean) < THRESHOLD) {
+			 if (abs((int32_t)sample12 - (int32_t)mean) < THRESHOLD) {
 				new_sample = sample12;
 			 }
 			 else{
@@ -226,8 +234,8 @@ int main(void)
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
 				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			uint8_t sample8 = mean;
-			uint8_t sample8pt2 = mean >> 8;
+			uint8_t sample8 = (uint8_t)mean;
+			uint8_t sample8pt2 = (uint8_t)(mean >> 8);
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
