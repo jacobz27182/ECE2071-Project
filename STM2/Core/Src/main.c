@@ -35,8 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define N 1 // number of samples to average
-#define THRESHOLD 9999 // threshold for the average value
+#define N 4 // number of samples to average
+#define THRESHOLD 240 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/

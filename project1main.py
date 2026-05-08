@@ -98,49 +98,45 @@ def distance_trigger_mode(ser):
     stopShortTime = 2.0 
 
     ser.reset_input_buffer()
-    try:
-        data = []
-        ser.timeout = 5
-        b = ser.read(2) #only start timing after the first byte is received
-        if len(b) == 0:
-            print("Timed out")
-            return
-        
-        print("Recording Begun")
-        data.append((b[1]<<8)|b[0]) 
-        ser.timeout = stopShortTime
-        while True: 
-            b = ser.read(2)
-            if len(b)<2: break #timed out
-            data.append((b[1]<<8)|b[0])
+    data = []
+    ser.timeout = 5
+    b = ser.read(2) #only start timing after the first byte is received
+    if len(b) == 0:
+        print("Timed out")
+        return
+    
+    print("Recording Begun")
+    ser.timeout = stopShortTime
+    raw = b''
+    while True:
+        chunk = ser.read(1024)
+        if not chunk:  # this chunk timed out = no data for `timeout` seconds
+            break
+        raw += chunk
+    i = 0;
+    while (i<len(raw)-2):
+        if ((raw[i+1]>>4)^0): #this SHOULD BE FALSE
+            i += 1
+            continue
+        sample = (raw[i+1] << 8) | raw[i]
+        i+=2
+    # print(sample)
+        data.append(sample)
+    print("Recording Finished")
 
-        print("Recording Finished")
-        data = np.array(data) # convert to numpy array because we need to do some processing on it
+    data = np.array(data) # convert to numpy array because we need to do some processing on it
 
-        if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
-            data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
-            data = data * (2**16-1)                    
-            data = data.astype(np.uint16)         # convert to uint16 type
-        else:
-            data = np.zeros_like(data, dtype=np.uint16) # if there is no variation, just create an array of zeros
+    if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
+        data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
+        data = data * (2**12-1)                    
+        data = data.astype(np.uint16)         # convert to uint16 type
+    else:
+        data = np.zeros_like(data, dtype=np.uint16) # if there is no variation, just create an array of zeros
 
-        ser.timeout = None
-        return data
+    ser.timeout = None
+    return data
             
         
-    except KeyboardInterrupt:
-        print("\rManual Exit Distance Trigger Mode... \n")
-        data = np.array(data) # convert to numpy array because we need to do some processing on it
-
-        if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
-            data = (data - data.min()) / (data.max()-data.min()) # scale to 0-1
-            data = data * (2**16-1)                   
-            data = data.astype(np.uint16)         # convert to uint16 type
-        else:
-            data = np.zeros_like(data, dtype=np.uint16) # if there is no variation, just create an array of zeros
-
-        ser.timeout = None
-        return data
                 
             
 def main():
