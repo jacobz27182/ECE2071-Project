@@ -145,7 +145,7 @@ int main(void)
   while (1)
   {
 //	    char debug_msg[100];
-//		sample12 = SPI1_Read12Bits();
+		sample12 = SPI1_Read12Bits();
 //		sprintf(debug_msg,"%d\r\n",sample12);
 //		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)debug_msg,8);
 //		continue;
@@ -212,11 +212,7 @@ int main(void)
 		}
 
 	  //processing logic
-		if (process){
-			downsample_toggle = !downsample_toggle;
-//			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
-			sample12 = SPI1_Read12Bits();
-		if(1){
+		if(process){
 			mean = sum / N;
 
 			  // this is outlier rejection
@@ -243,7 +239,7 @@ int main(void)
 				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			 }
 
-		}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
