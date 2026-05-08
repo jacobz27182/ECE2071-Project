@@ -101,6 +101,9 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  LL_SPI_SetCRCWidth(SPI1, LL_SPI_CRC_16BIT);
+  LL_SPI_SetCRCPolynomial(SPI1, 7);
+  LL_SPI_EnableCRC(SPI1);
   LL_SPI_Enable(SPI1);
   HAL_ADC_Start_IT(&hadc1);
   HAL_TIM_Base_Start(&htim1);
@@ -413,10 +416,17 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 static void SPI1_Write2Bytes(uint16_t tx_bytes){
+	LL_SPI_Disable(SPI1);
+	LL_SPI_DisableCRC(SPI1);
+	LL_SPI_EnableCRC(SPI1);
+	LL_SPI_Enable(SPI1);
 	while (!LL_SPI_IsActiveFlag_TXE(SPI1)){;}
 	LL_SPI_TransmitData16(SPI1,tx_bytes);
+	while (!LL_SPI_IsActiveFlag_TXE(SPI1)){;}
+	SET_BIT(SPI1->CR1, SPI_CR1_CRCNEXT);
 	while (LL_SPI_IsActiveFlag_BSY(SPI1)){;}
 	LL_SPI_ClearFlag_OVR(SPI1);
+	HAL_GPIO_WritePin(LD3_GPIO_Port,LD3_Pin,1);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
