@@ -5,6 +5,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import wave
 import csv
+from scipy.signal import butter, filtfilt
+
+def apply_lpf(data,fs = 44100,cutoff = 5500,order=4):
+    nyq = fs / 2
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low')
+    filtered = filtfilt(b, a, data)
+    return filtered.astype(np.uint16)
+
+def apply_hpf(data, fs=44100, cutoff=80, order=4):
+    nyq = fs / 2
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='high')
+    filtered = filtfilt(b, a, data)
+    return filtered.astype(np.int16)
 
 def serial_initiate():
     port = serial.tools.list_ports.comports()[0].device
@@ -180,7 +195,22 @@ def main():
                     print("Invalid choice. Please enter a number between 1 to 3")
                     continue
             
-            while data is not None:
+            if data is None: continue
+            while True:
+                decision = input("Do you want to apply a noise filter? (Y/N): ")
+                match decision.lower():
+                    case "y":
+                        filtered_data_0 = apply_lpf(data)
+                        filtered_data = apply_hpf(filtered_data_0)
+                        break
+                    case "n":
+                        filtered_data = data
+                        break
+                    case _:
+                        print("Please enter Y/N")
+                        continue
+            while True:
+                # filtered_data = data
                 print("Possible File Formats:")
                 print("1. wav")
                 print("2. png")
@@ -192,13 +222,13 @@ def main():
                     match filetype:
                         case "1":
                             print("Saving as wav file")
-                            save_wave(f"Team_I_14_{sampleRate}_{timestamp}.wav",data,sampleRate)
+                            save_wave(f"Team_I_14_{sampleRate}_{timestamp}.wav",filtered_data,sampleRate)
                         case "2":
                             print("Saving as png file")
-                            save_plot(f"Team_I_14_{sampleRate}_{timestamp}", data, sampleRate)
+                            save_plot(f"Team_I_14_{sampleRate}_{timestamp}", filtered_data, sampleRate)
                         case "3":
                             print("Saving as csv file")
-                            save_csv(f"Team_I_14_{sampleRate}_{timestamp}.csv", data, sampleRate)
+                            save_csv(f"Team_I_14_{sampleRate}_{timestamp}.csv", filtered_data, sampleRate)
                         case "4":
                             break
                         case _:
