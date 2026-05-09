@@ -123,7 +123,6 @@ int main(void)
   //logical flags
   bool manual = true; // True for Manual Mode, False for Distance Mode
   bool process = false; //do we choose to process data?
-  bool downsample_toggle = true;
   bool idle = true; //Is the stm doing nothing (waiting for pc instruction)?
 
   bool waiting = true; //is the Ultrasonic Sensor in the cooloff period between readings?
@@ -144,8 +143,8 @@ int main(void)
   }
   while (1)
   {
-//	    char debug_msg[100];
 		sample12 = SPI1_Read12Bits();
+//	    char debug_msg[100];
 //		sprintf(debug_msg,"%d\r\n",sample12);
 //		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)debug_msg,8);
 //		continue;
@@ -345,7 +344,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
   SPI_InitStruct.Mode = LL_SPI_MODE_SLAVE;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_12BIT;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_16BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
@@ -494,8 +493,22 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 static uint16_t SPI1_Read12Bits(void){
+	static uint16_t last_good_msg = 2048;
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    return LL_SPI_ReceiveData16(SPI1) & 0x0FFF;
+    uint16_t msg =  LL_SPI_ReceiveData16(SPI1);
+    if (msg & 0xF000){
+    	//error handling
+    	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
+    	LL_SPI_Disable(SPI1);
+    	LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_SPI1);
+    	LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_SPI1);
+		MX_SPI1_Init();
+		LL_SPI_Enable(SPI1);
+    	msg = last_good_msg;
+    } else {
+    	last_good_msg = msg;
+    }
+    return msg & 0x0FFF;
 }
 /* USER CODE END 4 */
 
