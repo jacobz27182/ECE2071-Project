@@ -496,15 +496,15 @@ static uint16_t SPI1_Read12Bits(void){
 	static uint16_t last_good_msg = 2048;
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
     uint16_t msg =  LL_SPI_ReceiveData16(SPI1);
-    if (msg & 0xF000){
+    if (msg & 0xF000){ //in a 12 bit message the upper 4 bytes should be empty
     	//error handling
-    	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-    	LL_SPI_Disable(SPI1);
+    	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin); //signal there is an error
+    	LL_SPI_Disable(SPI1); // begin reset
     	LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_SPI1);
     	LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_SPI1);
 		MX_SPI1_Init();
-		LL_SPI_Enable(SPI1);
-    	msg = last_good_msg;
+		LL_SPI_Enable(SPI1); //finish reset
+    	msg = last_good_msg; //keep track of the last good message, just so that were not sending garbage
     } else {
     	last_good_msg = msg;
     }
