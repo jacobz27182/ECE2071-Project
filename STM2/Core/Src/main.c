@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
 #include "stdbool.h"
 #include "math.h"
 /* USER CODE END Includes */
@@ -33,8 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define N 4 // number of samples to average
-#define THRESHOLD 60 // threshold for the average value
+#define N 1 // number of samples to average
+#define THRESHOLD 99999 // threshold for the average value
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,7 +63,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
-static uint16_t SPI1_Read10Bits(void);
+static uint16_t SPI1_Read12Bits(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,7 +107,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   LL_SPI_Enable(SPI1);
 
-  uint16_t sample10;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t sample12;// 10 bit sample filtered by the moving window from the raw data
   uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
@@ -117,12 +119,10 @@ int main(void)
   float long_time = 12*divider;
   int echo_time = 0;
   int index = 0;
-  int s=0;
 
   //logical flags
   bool manual = true; // True for Manual Mode, False for Distance Mode
   bool process = false; //do we choose to process data?
-  bool downsample_toggle = true;
   bool idle = true; //Is the stm doing nothing (waiting for pc instruction)?
 
   bool waiting = true; //is the Ultrasonic Sensor in the cooloff period between readings?
@@ -133,16 +133,22 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim16);
-  sample10 = SPI1_Read10Bits();
+  sample12 = SPI1_Read12Bits();
   // fill the buffer with the first N samples
   sum = 0;
   for(int i = 0; i < N; i++) {
-      buffer[i] = sample10;
-      sum = sum + sample10;
+      buffer[i] = sample12;
+      sum = sum + sample12;
       //initialise the buffer to provide the initial sum for the mean calculation, so we fill the buffer with the first N samples with the sample10 value
   }
   while (1)
   {
+		sample12 = SPI1_Read12Bits();
+//	    char debug_msg[100];
+//		sprintf(debug_msg,"%d\r\n",sample12);
+//		HAL_UART_Transmit_DMA(&huart2,(uint8_t *)debug_msg,8);
+//		continue;
+
 //		state logic
 	  //check for instruction from pc
 		if (HAL_UART_Receive(&huart2, &flag, 1, 0) == HAL_OK){
@@ -205,19 +211,15 @@ int main(void)
 		}
 
 	  //processing logic
-		if (process){
-			downsample_toggle = !downsample_toggle;
-//			HAL_GPIO_TogglePin(Debug_GPIO_Port,Debug_Pin);
-			sample10 = SPI1_Read10Bits();
-		if(downsample_toggle){
+		if(process){
 			mean = sum / N;
 
 			  // this is outlier rejection
-			 if (abs(sample10 - mean) < THRESHOLD) {
-				new_sample = sample10;
+			 if (abs((int32_t)sample12 - (int32_t)mean) < THRESHOLD) {
+				new_sample = sample12;
 			 }
 			 else{
-				 new_sample = mean + (sample10 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
+				 new_sample = mean + (sample12 > mean ? 1 : -1) * THRESHOLD/2; // drift toward real value slowly
 			 }
 
 			 // update the buffer and the sum
@@ -226,14 +228,17 @@ int main(void)
 			 sum += new_sample;
 			 index = (index + 1) % N; // so the index will cycle through the buffer from 0 to N-1
 
-//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
-			uint8_t sample8 = mean >> 2; //shift the mean by 2 bits so that from 10 bit to 8 bit
+				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,1);
+			uint8_t sample8 = (uint8_t)mean;
+			uint8_t sample8pt2 = (uint8_t)(mean >> 8);
 			while (!(huart2.Instance->ISR & USART_ISR_TXE));
 			huart2.Instance->TDR = sample8;
-//				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
+			while (!(huart2.Instance->ISR & USART_ISR_TXE));
+			huart2.Instance->TDR = sample8pt2;
+				HAL_GPIO_WritePin(Debug2_GPIO_Port,Debug2_Pin,0);
 			 }
 
-		}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -339,7 +344,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
   SPI_InitStruct.Mode = LL_SPI_MODE_SLAVE;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_10BIT;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_16BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
@@ -487,9 +492,23 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static uint16_t SPI1_Read10Bits(void){
+static uint16_t SPI1_Read12Bits(void){
+	static uint16_t last_good_msg = 2048;
     while (!LL_SPI_IsActiveFlag_RXNE(SPI1));  // wait for data to be ready
-    return LL_SPI_ReceiveData16(SPI1) & 0x03FF;
+    uint16_t msg =  LL_SPI_ReceiveData16(SPI1);
+    if (msg & 0xF000){ //in a 12 bit message the upper 4 bytes should be empty
+    	//error handling
+    	HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin); //signal there is an error
+    	LL_SPI_Disable(SPI1); // begin reset
+    	LL_APB2_GRP1_ForceReset(LL_APB2_GRP1_PERIPH_SPI1);
+    	LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_SPI1);
+		MX_SPI1_Init();
+		LL_SPI_Enable(SPI1); //finish reset
+    	msg = last_good_msg; //keep track of the last good message, just so that were not sending garbage
+    } else {
+    	last_good_msg = msg;
+    }
+    return msg & 0x0FFF;
 }
 /* USER CODE END 4 */
 
