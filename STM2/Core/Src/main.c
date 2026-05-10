@@ -107,7 +107,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   LL_SPI_Enable(SPI1);
 
-  uint16_t sample12;// 10 bit sample filtered by the moving window from the raw data
+  uint16_t sample12;// 12 bit sample filtered by the moving window from the raw data
   uint16_t buffer[N];
   uint16_t mean; // mean of the sample10 in the last N samples
   uint16_t new_sample; // new sample from the raw data just to filter out the value greater than the threshold
