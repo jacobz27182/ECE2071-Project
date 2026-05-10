@@ -19,7 +19,7 @@ def apply_hpf(data, fs=44100, cutoff=80, order=4):
     normal_cutoff = cutoff / nyq
     b, a = butter(order, normal_cutoff, btype='high')
     filtered = filtfilt(b, a, data)
-    return filtered.astype(np.int16)
+    return filtered.astype(np.uint16)
 
 def serial_initiate():
     port = serial.tools.list_ports.comports()[0].device
@@ -53,6 +53,7 @@ def record_audio(ser, duration, sampleRate):
         # print(sample)
         data.append(sample)
 
+    ser.read(ser.in_waiting) #flush buffer
     return np.array(data)
             
 
@@ -138,7 +139,7 @@ def distance_trigger_mode(ser):
     # print(sample)
         data.append(sample)
     print("Recording Finished")
-
+    ser.read(ser.in_waiting) #flush buffer
     data = np.array(data) # convert to numpy array because we need to do some processing on it
 
     if data.max() != data.min(): # check if there is any variation in the data to avoid division by zero
